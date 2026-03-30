@@ -1,0 +1,37 @@
+
+  server:
+    port: 8081
+
+  spring:
+    application:
+      name: customer-service
+
+    # Configuration PostgreSQL
+    datasource:
+      url: jdbc:postgresql://localhost:5432/couture_customers # Assure-toi de créer cette DB
+      username: dev_user
+      password: dev_password # Ton mot de passe défini dans docker-compose
+      driver-class-name: org.postgresql.Driver
+
+    jpa:
+      hibernate:
+        ddl-auto: update # Pratique pour le dev
+      show-sql: true
+      #properties:
+        #hibernate:
+          #format_sql: true
+          #dialect: org.hibernate.dialect.PostgreSQLDialect
+
+    # Configuration de la sécurité (Resource Server)
+    security:
+      oauth2:
+        resourceserver:
+          jwt:
+            # C'est l'URL exacte de ton Realm.
+            # Spring Boot va appeler cette URL au démarrage pour récupérer les clés publiques de Keycloak.
+            issuer-uri: http://localhost:9090/realms/lex-couture
+
+  # Configuration Swagger (Pour pouvoir envoyer le token via l'interface)
+  springdoc:
+    swagger-ui:
+      path: /swagger-ui.html
