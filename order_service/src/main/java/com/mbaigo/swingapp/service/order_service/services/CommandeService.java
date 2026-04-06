@@ -12,5 +12,6 @@ public interface CommandeService {
 
     // Méthodes classiques
     CommandeResponse getCommandeById(Long id);
+
     List<CommandeResponse> getAllCommandes();
 }

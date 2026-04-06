@@ -1,0 +1,45 @@
+package com.mbaigo.swingapp.service.order_service.controller;
+
+import com.mbaigo.swingapp.service.order_service.dto.CommandeRequest;
+import com.mbaigo.swingapp.service.order_service.dto.CommandeResponse;
+import com.mbaigo.swingapp.service.order_service.services.CommandeService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/commandes")
+@RequiredArgsConstructor
+@Tag(name = "Order Management", description = "Endpoints pour la gestion des commandes et des confections")
+public class CommandeController {
+
+    private final CommandeService commandeService;
+
+    @PostMapping
+    @Operation(summary = "US 5.1/5.2/5.3 - Créer une nouvelle commande",
+            description = "Instancie une commande, applique les substitutions de tissus et fige les prix (snapshot).")
+    public ResponseEntity<CommandeResponse> createCommande(@Valid @RequestBody CommandeRequest request) {
+        CommandeResponse response = commandeService.createCommande(request);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Récupérer une commande par son ID",
+            description = "Affiche le détail de la commande avec ses lignes de matériaux et le prix total calculé.")
+    public ResponseEntity<CommandeResponse> getCommandeById(@PathVariable Long id) {
+        return ResponseEntity.ok(commandeService.getCommandeById(id));
+    }
+
+    @GetMapping
+    @Operation(summary = "Lister toutes les commandes",
+            description = "Retourne l'ensemble des commandes de l'atelier.")
+    public ResponseEntity<List<CommandeResponse>> getAllCommandes() {
+        return ResponseEntity.ok(commandeService.getAllCommandes());
+    }
+}
