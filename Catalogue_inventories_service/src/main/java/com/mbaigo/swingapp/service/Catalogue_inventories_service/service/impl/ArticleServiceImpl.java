@@ -93,4 +93,14 @@ public class ArticleServiceImpl implements ArticleService {
                 .orElseThrow(() -> new IllegalArgumentException("Article introuvable avec l'ID : " + id));
         return articleMapper.toResponse(article);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ArticleResponse> getArticlesByIds(List<Long> ids) {
+        return articleRepository.findAllById(ids)
+                .stream()
+                .map(articleMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
 }

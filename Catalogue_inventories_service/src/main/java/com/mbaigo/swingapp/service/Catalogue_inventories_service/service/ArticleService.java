@@ -19,4 +19,6 @@ public interface ArticleService {
     // Méthodes classiques utiles
     List<ArticleResponse> getAllArticles();
     ArticleResponse getArticleById(Long id);
+
+    List<ArticleResponse> getArticlesByIds(List<Long> ids);
 }

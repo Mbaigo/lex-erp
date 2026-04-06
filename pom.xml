@@ -15,6 +15,7 @@
     <!-- La liste de tes microservices -->
     <modules>
         <module>customer-service</module>
+        <module>order_service</module>
         <module>Catalogue_inventories_service</module>
     </modules>
 

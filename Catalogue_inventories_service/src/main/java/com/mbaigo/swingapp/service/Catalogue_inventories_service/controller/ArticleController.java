@@ -58,4 +58,12 @@ public class ArticleController {
         ArticleResponse response = articleService.getArticleById(id);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/batch")
+    @Operation(summary = "US 5.1/5.3 Optimisée - Récupérer un lot d'articles", description = "Permet de récupérer plusieurs articles en une seule requête pour éviter le problème N+1 réseau.")
+    public ResponseEntity<List<ArticleResponse>> getArticlesByIds(@RequestBody List<Long> ids) {
+        List<ArticleResponse> responses = articleService.getArticlesByIds(ids);
+        return ResponseEntity.ok(responses);
+    }
+
 }
