@@ -2,6 +2,7 @@ package com.mbaigo.swingapp.service.order_service.clientService;
 
 import com.mbaigo.swingapp.service.order_service.clientDto.CatalogArticleDTO;
 import com.mbaigo.swingapp.service.order_service.clientDto.CatalogModeleDTO;
+import com.mbaigo.swingapp.service.order_service.dto.reStock.RestockItemRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,4 +25,8 @@ public interface CatalogServiceClient {
 
     @PostMapping("/api/articles/batch")
     List<CatalogArticleDTO> getArticlesInBatch(@RequestBody List<Long> ids);
+
+    // NOUVEL ENDPOINT POUR LE ROLLBACK (US 6.2)
+    @PostMapping("/api/articles/stock/restock-batch")
+    void restockArticles(@RequestBody List<RestockItemRequest> requests);
 }

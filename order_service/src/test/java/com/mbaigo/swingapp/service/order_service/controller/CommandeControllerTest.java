@@ -19,9 +19,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -113,5 +113,24 @@ class CommandeControllerTest {
                 .andExpect(jsonPath("$.size()").value(2))
                 .andExpect(jsonPath("$[0].id").value(1L))
                 .andExpect(jsonPath("$[1].id").value(2L));
+    }
+
+    @Test
+    @DisplayName("PATCH /commandes/{id}/statut - Doit retourner 200 OK")
+    void updateStatut_shouldReturnOk() throws Exception {
+        mockMvc.perform(patch("/api/commandes/1/statut")
+                        .param("nouveauStatut", "EN_CONFECTION"))
+                .andExpect(status().isOk());
+
+        verify(commandeService).updateStatut(1L, StatutCommande.EN_CONFECTION);
+    }
+
+    @Test
+    @DisplayName("POST /commandes/{id}/annuler - Doit retourner 200 OK")
+    void annulerCommande_shouldReturnOk() throws Exception {
+        mockMvc.perform(post("/api/commandes/1/annuler"))
+                .andExpect(status().isOk());
+
+        verify(commandeService).annulerCommande(1L);
     }
 }

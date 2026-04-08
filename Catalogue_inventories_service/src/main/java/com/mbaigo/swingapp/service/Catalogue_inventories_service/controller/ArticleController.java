@@ -2,6 +2,7 @@ package com.mbaigo.swingapp.service.Catalogue_inventories_service.controller;
 
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleResponse;
+import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.reStock.RestockItemRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.service.ArticleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -64,6 +65,13 @@ public class ArticleController {
     public ResponseEntity<List<ArticleResponse>> getArticlesByIds(@RequestBody List<Long> ids) {
         List<ArticleResponse> responses = articleService.getArticlesByIds(ids);
         return ResponseEntity.ok(responses);
+    }
+
+    @PostMapping("/stock/restock-batch")
+    @Operation(summary = "US 6.2 - Recréditer les stocks en masse", description = "Utilisé par le order-service lors de l'annulation d'une commande.")
+    public ResponseEntity<Void> restockBatch(@Valid @RequestBody List<RestockItemRequest> requests) {
+        articleService.restockBatch(requests);
+        return ResponseEntity.ok().build();
     }
 
 }

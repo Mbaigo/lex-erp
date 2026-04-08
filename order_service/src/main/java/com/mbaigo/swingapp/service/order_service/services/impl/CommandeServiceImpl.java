@@ -6,6 +6,7 @@ import com.mbaigo.swingapp.service.order_service.clientService.CatalogServiceCli
 import com.mbaigo.swingapp.service.order_service.dto.CommandeRequest;
 import com.mbaigo.swingapp.service.order_service.dto.CommandeResponse;
 import com.mbaigo.swingapp.service.order_service.dto.LigneMateriauCommandeRequest;
+import com.mbaigo.swingapp.service.order_service.dto.reStock.RestockItemRequest;
 import com.mbaigo.swingapp.service.order_service.entities.Commande;
 import com.mbaigo.swingapp.service.order_service.entities.LigneMateriauCommande;
 import com.mbaigo.swingapp.service.order_service.enums.StatutCommande;
@@ -113,6 +114,53 @@ public class CommandeServiceImpl implements CommandeService {
                 .stream()
                 .map(commandeMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public CommandeResponse updateStatut(Long id, StatutCommande nouveauStatut) {
+        Commande commande = commandeRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Commande introuvable."));
+
+        // Règle métier : On ne modifie pas le statut d'une commande annulée ou déjà terminée
+        if (commande.getStatut() == StatutCommande.ANNULEE || commande.getStatut() == StatutCommande.TERMINEE) {
+            throw new IllegalStateException("Impossible de modifier le statut d'une commande " + commande.getStatut());
+        }
+
+        // Règle métier : Si on veut annuler, on force à utiliser la méthode dédiée au rollback
+        if (nouveauStatut == StatutCommande.ANNULEE) {
+            throw new IllegalArgumentException("Pour annuler une commande, veuillez utiliser l'action d'annulation (qui gère les stocks).");
+        }
+
+        commande.setStatut(nouveauStatut);
+        Commande savedCommande = commandeRepository.save(commande);
+        return commandeMapper.toResponse(savedCommande);
+    }
+
+    @Override
+    public CommandeResponse annulerCommande(Long id) {
+        Commande commande = commandeRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Commande introuvable."));
+
+        if (commande.getStatut() == StatutCommande.ANNULEE) {
+            throw new IllegalStateException("Cette commande est déjà annulée.");
+        }
+
+        // US 6.2 : LE ROLLBACK DISTRIBUÉ
+        // 1. On prépare la liste de tous les articles et quantités à rendre au stock
+        List<RestockItemRequest> elementsARecrediter = commande.getMateriaux().stream()
+                .map(ligne -> new RestockItemRequest(ligne.getArticleId(), ligne.getQuantite()))
+                .collect(Collectors.toList());
+
+        // 2. On appelle le microservice Catalogue via Feign pour faire le restock
+        if (!elementsARecrediter.isEmpty()) {
+            catalogClient.restockArticles(elementsARecrediter);
+        }
+
+        // 3. Si le catalogue a répondu sans erreur (200 OK), on annule notre commande
+        commande.setStatut(StatutCommande.ANNULEE);
+        Commande savedCommande = commandeRepository.save(commande);
+
+        return commandeMapper.toResponse(savedCommande);
     }
 
 }

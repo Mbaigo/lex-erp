@@ -2,6 +2,7 @@ package com.mbaigo.swingapp.service.Catalogue_inventories_service.service.impl;
 
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleResponse;
+import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.reStock.RestockItemRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.entities.Article;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.entities.Categorie;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.mappers.ArticleMapper;
@@ -101,6 +102,20 @@ public class ArticleServiceImpl implements ArticleService {
                 .stream()
                 .map(articleMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void restockBatch(List<RestockItemRequest> requests) {
+        // On boucle sur les articles à remettre en stock
+        for (RestockItemRequest req : requests) {
+            Article article = articleRepository.findById(req.articleId())
+                    .orElseThrow(() -> new IllegalArgumentException("Article introuvable : " + req.articleId()));
+
+            // On recrédite la quantité (US 6.2)
+            article.setQuantiteEnStock(article.getQuantiteEnStock() + req.quantite());
+            articleRepository.save(article);
+        }
     }
 
 }

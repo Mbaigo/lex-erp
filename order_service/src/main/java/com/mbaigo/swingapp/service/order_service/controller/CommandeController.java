@@ -2,6 +2,7 @@ package com.mbaigo.swingapp.service.order_service.controller;
 
 import com.mbaigo.swingapp.service.order_service.dto.CommandeRequest;
 import com.mbaigo.swingapp.service.order_service.dto.CommandeResponse;
+import com.mbaigo.swingapp.service.order_service.enums.StatutCommande;
 import com.mbaigo.swingapp.service.order_service.services.CommandeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,5 +42,19 @@ public class CommandeController {
             description = "Retourne l'ensemble des commandes de l'atelier.")
     public ResponseEntity<List<CommandeResponse>> getAllCommandes() {
         return ResponseEntity.ok(commandeService.getAllCommandes());
+    }
+
+    @PatchMapping("/{id}/statut")
+    @Operation(summary = "US 6.1 - Mettre à jour le statut", description = "Fait avancer la commande dans le workflow de production.")
+    public ResponseEntity<CommandeResponse> updateStatut(
+            @PathVariable Long id,
+            @RequestParam StatutCommande nouveauStatut) {
+        return ResponseEntity.ok(commandeService.updateStatut(id, nouveauStatut));
+    }
+
+    @PostMapping("/{id}/annuler")
+    @Operation(summary = "US 6.2 - Annuler une commande et Rollback", description = "Annule la commande et contacte le catalogue pour remettre les tissus en stock.")
+    public ResponseEntity<CommandeResponse> annulerCommande(@PathVariable Long id) {
+        return ResponseEntity.ok(commandeService.annulerCommande(id));
     }
 }

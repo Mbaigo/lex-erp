@@ -6,7 +6,9 @@ import com.mbaigo.swingapp.service.order_service.clientService.CatalogServiceCli
 import com.mbaigo.swingapp.service.order_service.dto.CommandeRequest;
 import com.mbaigo.swingapp.service.order_service.dto.CommandeResponse;
 import com.mbaigo.swingapp.service.order_service.dto.LigneMateriauCommandeRequest;
+import com.mbaigo.swingapp.service.order_service.dto.reStock.RestockItemRequest;
 import com.mbaigo.swingapp.service.order_service.entities.Commande;
+import com.mbaigo.swingapp.service.order_service.entities.LigneMateriauCommande;
 import com.mbaigo.swingapp.service.order_service.enums.StatutCommande;
 import com.mbaigo.swingapp.service.order_service.mappers.CommandeMapper;
 import com.mbaigo.swingapp.service.order_service.repositories.CommandeRepository;
@@ -21,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -119,5 +122,70 @@ class CommandeServiceImplTest {
         CommandeResponse result = commandeService.getCommandeById(id);
 
         assertThat(result.id()).isEqualTo(id);
+    }
+
+    @Test
+    @DisplayName("US 6.1 - Doit mettre à jour le statut de la commande avec succès")
+    void updateStatut_shouldSuccess() {
+        // Arrange
+        Long id = 1L;
+        Commande commande = Commande.builder().id(id).statut(StatutCommande.CREEE).build();
+        when(commandeRepository.findById(id)).thenReturn(Optional.of(commande));
+        when(commandeRepository.save(any())).thenReturn(commande);
+        when(commandeMapper.toResponse(any())).thenReturn(new CommandeResponse(id, null, null, null, null, null, null, StatutCommande.EN_CONFECTION, List.of()));
+
+        // Act
+        CommandeResponse response = commandeService.updateStatut(id, StatutCommande.EN_CONFECTION);
+
+        // Assert
+        assertThat(commande.getStatut()).isEqualTo(StatutCommande.EN_CONFECTION);
+        verify(commandeRepository).save(commande);
+    }
+
+    @Test
+    @DisplayName("US 6.2 - L'annulation doit déclencher le restockage et changer le statut")
+    void annulerCommande_shouldTriggerRestock_andChangeStatus() {
+        // Arrange
+        Long id = 1L;
+        // Une commande avec 2 lignes de matériaux
+        LigneMateriauCommande l1 = LigneMateriauCommande.builder().articleId(10L).quantite(2.0).build();
+        LigneMateriauCommande l2 = LigneMateriauCommande.builder().articleId(11L).quantite(5.0).build();
+
+        Commande commande = Commande.builder()
+                .id(id)
+                .statut(StatutCommande.EN_CONFECTION)
+                .materiaux(new ArrayList<>(List.of(l1, l2)))
+                .build();
+
+        when(commandeRepository.findById(id)).thenReturn(Optional.of(commande));
+        when(commandeRepository.save(any())).thenReturn(commande);
+
+        // Act
+        commandeService.annulerCommande(id);
+
+        // Assert
+        // 1. Vérification du Rollback vers le catalogue via Feign
+        ArgumentCaptor<List<RestockItemRequest>> captor = ArgumentCaptor.forClass(List.class);
+        verify(catalogClient).restockArticles(captor.capture());
+
+        List<RestockItemRequest> capturedRequests = captor.getValue();
+        assertThat(capturedRequests).hasSize(2);
+        assertThat(capturedRequests.get(0).articleId()).isEqualTo(10L);
+        assertThat(capturedRequests.get(0).quantite()).isEqualTo(2.0);
+
+        // 2. Vérification du changement de statut local
+        assertThat(commande.getStatut()).isEqualTo(StatutCommande.ANNULEE);
+        verify(commandeRepository).save(commande);
+    }
+
+    @Test
+    @DisplayName("Doit interdire la modification d'une commande déjà terminée")
+    void updateStatut_shouldFail_whenOrderAlreadyFinished() {
+        Commande commande = Commande.builder().statut(StatutCommande.TERMINEE).build();
+        when(commandeRepository.findById(1L)).thenReturn(Optional.of(commande));
+
+        assertThatThrownBy(() -> commandeService.updateStatut(1L, StatutCommande.EN_CONFECTION))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Impossible de modifier le statut");
     }
 }

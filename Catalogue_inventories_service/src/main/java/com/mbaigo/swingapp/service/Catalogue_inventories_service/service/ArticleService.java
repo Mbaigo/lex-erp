@@ -2,6 +2,7 @@ package com.mbaigo.swingapp.service.Catalogue_inventories_service.service;
 
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleResponse;
+import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.reStock.RestockItemRequest;
 
 import java.util.List;
 
@@ -21,4 +22,6 @@ public interface ArticleService {
     ArticleResponse getArticleById(Long id);
 
     List<ArticleResponse> getArticlesByIds(List<Long> ids);
+    //Recreditation du stock en cas d'annulation d'une commande
+    void restockBatch(List<RestockItemRequest> requests);
 }
