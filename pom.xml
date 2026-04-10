@@ -17,6 +17,7 @@
         <module>customer-service</module>
         <module>order_service</module>
         <module>Catalogue_inventories_service</module>
+        <module>api-gateway</module>
     </modules>
 
 </project>

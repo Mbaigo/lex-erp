@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/articles")
+@RequestMapping("/api/v1/articles")
 @RequiredArgsConstructor
 @Tag(name = "Articles & Stock", description = "API de gestion de l'inventaire des matières premières et produits finis")
 public class ArticleController {

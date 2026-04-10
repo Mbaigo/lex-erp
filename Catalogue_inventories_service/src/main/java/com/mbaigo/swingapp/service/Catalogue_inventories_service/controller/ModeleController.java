@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/modeles")
+@RequestMapping("/api/v1/modeles")
 @RequiredArgsConstructor
 @Tag(name = "Modèles & Nomenclature", description = "API de gestion des recettes de fabrication (BOM) et du calcul des coûts de base.")
 public class ModeleController {

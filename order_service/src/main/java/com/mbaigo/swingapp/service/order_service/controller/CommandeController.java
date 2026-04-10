@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/commandes")
+@RequestMapping("/api/v1/commandes")
 @RequiredArgsConstructor
 @Tag(name = "Order Management", description = "Endpoints pour la gestion des commandes et des confections")
 public class CommandeController {
