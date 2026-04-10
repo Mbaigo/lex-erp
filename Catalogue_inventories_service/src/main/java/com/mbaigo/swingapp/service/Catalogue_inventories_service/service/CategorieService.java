@@ -13,4 +13,5 @@ public interface CategorieService {
 
     CategorieResponse getCategorieById(Long id);
     CategorieResponse updateCategorie(Long id, CategorieRequest request);
+    void deleteCategorie(Long id);
 }

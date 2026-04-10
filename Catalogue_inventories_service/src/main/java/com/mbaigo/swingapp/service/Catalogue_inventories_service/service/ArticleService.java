@@ -24,4 +24,5 @@ public interface ArticleService {
     List<ArticleResponse> getArticlesByIds(List<Long> ids);
     //Recreditation du stock en cas d'annulation d'une commande
     void restockBatch(List<RestockItemRequest> requests);
+    void deleteArticle(Long id);
 }

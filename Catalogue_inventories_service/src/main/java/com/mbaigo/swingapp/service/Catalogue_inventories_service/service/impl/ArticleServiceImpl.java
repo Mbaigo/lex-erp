@@ -22,23 +22,20 @@ import java.util.stream.Collectors;
 public class ArticleServiceImpl implements ArticleService {
 
     private final ArticleRepository articleRepository;
-    private final CategorieRepository categorieRepository; // Besoin pour vérifier si la catégorie existe
+    private final CategorieRepository categorieRepository;
     private final ArticleMapper articleMapper;
 
     @Override
     public ArticleResponse createArticle(ArticleRequest request) {
-        // 1. Vérifier que la référence est unique
         if (articleRepository.existsByReference(request.reference())) {
-            throw new IllegalArgumentException("Un article avec la référence " + request.reference() + " existe déjà.");
+            throw new IllegalArgumentException("Impossible de créer l'article : la référence '" + request.reference() + "' existe déjà.");
         }
 
-        // 2. Vérifier que la catégorie existe
         Categorie categorie = categorieRepository.findById(request.categorieId())
-                .orElseThrow(() -> new IllegalArgumentException("Catégorie introuvable avec l'ID : " + request.categorieId()));
+                .orElseThrow(() -> new IllegalArgumentException("Impossible de lier l'article : la catégorie avec l'ID " + request.categorieId() + " n'existe pas."));
 
-        // 3. Mapper et sauvegarder
         Article article = articleMapper.toEntity(request);
-        article.setCategorie(categorie); // On s'assure que la relation est bien faite
+        article.setCategorie(categorie);
 
         Article savedArticle = articleRepository.save(article);
         return articleMapper.toResponse(savedArticle);
@@ -60,20 +57,18 @@ public class ArticleServiceImpl implements ArticleService {
         }
 
         Article article = articleRepository.findByReference(reference)
-                .orElseThrow(() -> new IllegalArgumentException("Article introuvable avec la référence : " + reference));
+                .orElseThrow(() -> new IllegalArgumentException("Mouvement de stock impossible : l'article avec la référence '" + reference + "' est introuvable."));
 
         if (isDebit) {
-            // US 3.3 : Bloquer si le stock est insuffisant
             if (article.getQuantiteEnStock() < quantite) {
-                throw new IllegalStateException("Stock insuffisant. Stock actuel : " + article.getQuantiteEnStock());
+                // Intercepté par le GlobalExceptionHandler -> Renvoie une 409 Conflict
+                throw new IllegalStateException("Stock insuffisant pour l'article '" + reference + "'. Stock actuel : " + article.getQuantiteEnStock());
             }
             article.setQuantiteEnStock(article.getQuantiteEnStock() - quantite);
         } else {
-            // Crédit (Ajout en stock)
             article.setQuantiteEnStock(article.getQuantiteEnStock() + quantite);
         }
 
-        // La sauvegarde déclenchera la vérification @Version automatiquement (Optimistic Locking)
         Article updatedArticle = articleRepository.save(article);
         return articleMapper.toResponse(updatedArticle);
     }
@@ -91,7 +86,7 @@ public class ArticleServiceImpl implements ArticleService {
     @Transactional(readOnly = true)
     public ArticleResponse getArticleById(Long id) {
         Article article = articleRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Article introuvable avec l'ID : " + id));
+                .orElseThrow(() -> new IllegalArgumentException("L'article avec l'ID " + id + " est introuvable."));
         return articleMapper.toResponse(article);
     }
 
@@ -105,17 +100,24 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    @Transactional
     public void restockBatch(List<RestockItemRequest> requests) {
-        // On boucle sur les articles à remettre en stock
         for (RestockItemRequest req : requests) {
             Article article = articleRepository.findById(req.articleId())
-                    .orElseThrow(() -> new IllegalArgumentException("Article introuvable : " + req.articleId()));
+                    .orElseThrow(() -> new IllegalArgumentException("Restockage échoué : Article introuvable (ID: " + req.articleId() + ")"));
 
-            // On recrédite la quantité (US 6.2)
             article.setQuantiteEnStock(article.getQuantiteEnStock() + req.quantite());
             articleRepository.save(article);
         }
     }
 
+    // NOUVEAU : Méthode de suppression
+    @Override
+    public void deleteArticle(Long id) {
+        if (!articleRepository.existsById(id)) {
+            throw new IllegalArgumentException("Impossible de supprimer : l'article avec l'ID " + id + " n'existe pas.");
+        }
+        // Si l'article est utilisé dans une Nomenclature de Modèle, JPA va jeter une DataIntegrityViolationException.
+        // Le GlobalExceptionHandler la transformera en message propre pour le Gérant.
+        articleRepository.deleteById(id);
+    }
 }

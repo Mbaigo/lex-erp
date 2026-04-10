@@ -10,4 +10,5 @@ public interface ModeleService {
     List<ModeleResponse> getAllModeles();
     ModeleResponse getModeleById(Long id);
     ModeleResponse updateModele(Long id, ModeleRequest request);
+    void deleteModele(Long id);
 }

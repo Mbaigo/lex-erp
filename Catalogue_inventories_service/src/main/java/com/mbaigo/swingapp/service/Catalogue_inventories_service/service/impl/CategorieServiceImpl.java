@@ -23,19 +23,11 @@ public class CategorieServiceImpl implements CategorieService {
 
     @Override
     public CategorieResponse createCategorie(CategorieRequest request) {
-        // Règle métier : le code doit être unique
         if (categorieRepository.existsByCode(request.code())) {
-            throw new IllegalArgumentException("Une catégorie avec le code " + request.code() + " existe déjà.");
+            throw new IllegalArgumentException("Impossible de créer la catégorie : le code '" + request.code() + "' existe déjà.");
         }
-
-        // 1. Conversion DTO -> Entité
         Categorie categorie = categorieMapper.toEntity(request);
-
-        // 2. Sauvegarde en base
-        Categorie savedCategorie = categorieRepository.save(categorie);
-
-        // 3. Conversion Entité -> DTO pour la réponse
-        return categorieMapper.toResponse(savedCategorie);
+        return categorieMapper.toResponse(categorieRepository.save(categorie));
     }
 
     @Override
@@ -51,24 +43,31 @@ public class CategorieServiceImpl implements CategorieService {
     @Transactional(readOnly = true)
     public CategorieResponse getCategorieById(Long id) {
         Categorie categorie = categorieRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Catégorie introuvable avec l'ID : " + id));
+                .orElseThrow(() -> new IllegalArgumentException("La catégorie avec l'ID " + id + " est introuvable."));
         return categorieMapper.toResponse(categorie);
     }
 
     @Override
     public CategorieResponse updateCategorie(Long id, CategorieRequest request) {
         Categorie categorie = categorieRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Catégorie introuvable avec l'ID : " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Mise à jour impossible : la catégorie avec l'ID " + id + " est introuvable."));
 
-        // Règle métier : Vérifier que le nouveau code n'est pas déjà pris par UNE AUTRE catégorie
         if (!categorie.getCode().equals(request.code()) && categorieRepository.existsByCode(request.code())) {
-            throw new IllegalArgumentException("Le code " + request.code() + " est déjà utilisé par une autre catégorie.");
+            throw new IllegalArgumentException("Le code '" + request.code() + "' est déjà utilisé par une autre catégorie.");
         }
 
-        // MapStruct met à jour l'entité existante avec les nouvelles données
         categorieMapper.updateEntityFromRequest(request, categorie);
+        return categorieMapper.toResponse(categorieRepository.save(categorie));
+    }
 
-        Categorie updatedCategorie = categorieRepository.save(categorie);
-        return categorieMapper.toResponse(updatedCategorie);
+    // NOUVEAU : Méthode de suppression
+    @Override
+    public void deleteCategorie(Long id) {
+        if (!categorieRepository.existsById(id)) {
+            throw new IllegalArgumentException("Impossible de supprimer : la catégorie avec l'ID " + id + " n'existe pas.");
+        }
+        // Si la catégorie contient encore des articles, JPA va jeter une DataIntegrityViolationException.
+        // Le GlobalExceptionHandler la captera (409 Conflict).
+        categorieRepository.deleteById(id);
     }
 }

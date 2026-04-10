@@ -27,18 +27,15 @@ public class ModeleServiceImpl implements ModeleService {
     @Override
     public ModeleResponse createModele(ModeleRequest request) {
         if (modeleRepository.existsByReference(request.reference())) {
-            throw new IllegalArgumentException("Un modèle avec la référence " + request.reference() + " existe déjà.");
+            throw new IllegalArgumentException("Impossible de créer le modèle : la référence '" + request.reference() + "' existe déjà.");
         }
 
         Modele modele = modeleMapper.toEntity(request);
 
-        // Lier chaque ligne de nomenclature à son modèle parent et charger l'article réel
         modele.getLignesNomenclature().forEach(ligne -> {
-            ligne.setModele(modele); // Bidirectionnalité indispensable pour Hibernate
-
-            // On s'assure que l'article existe et on le charge pour pouvoir calculer le coût de base
+            ligne.setModele(modele);
             Article article = articleRepository.findById(ligne.getArticle().getId())
-                    .orElseThrow(() -> new IllegalArgumentException("Article introuvable avec l'ID : " + ligne.getArticle().getId()));
+                    .orElseThrow(() -> new IllegalArgumentException("Création du modèle impossible : l'article avec l'ID " + ligne.getArticle().getId() + " n'existe pas dans le catalogue."));
             ligne.setArticle(article);
         });
 
@@ -59,36 +56,41 @@ public class ModeleServiceImpl implements ModeleService {
     @Transactional(readOnly = true)
     public ModeleResponse getModeleById(Long id) {
         Modele modele = modeleRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Modèle introuvable avec l'ID : " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Le modèle avec l'ID " + id + " est introuvable."));
         return modeleMapper.toResponse(modele);
     }
 
     @Override
     public ModeleResponse updateModele(Long id, ModeleRequest request) {
         Modele modele = modeleRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Modèle introuvable avec l'ID : " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Mise à jour impossible : le modèle avec l'ID " + id + " est introuvable."));
 
-        // Vérification de la référence unique
         if (!modele.getReference().equals(request.reference()) && modeleRepository.existsByReference(request.reference())) {
-            throw new IllegalArgumentException("La référence " + request.reference() + " est déjà utilisée.");
+            throw new IllegalArgumentException("La référence '" + request.reference() + "' est déjà utilisée par un autre modèle.");
         }
 
-        // 1. Astuce JPA : On vide la nomenclature actuelle pour forcer le "orphanRemoval"
-        // à supprimer les anciennes lignes de la base de données.
         modele.getLignesNomenclature().clear();
-
-        // 2. On applique les nouvelles valeurs (MapStruct va ajouter les nouvelles lignes dans la liste)
         modeleMapper.updateEntityFromRequest(request, modele);
 
-        // 3. On doit refaire le lien bidirectionnel parent-enfant comme à la création !
         modele.getLignesNomenclature().forEach(ligne -> {
             ligne.setModele(modele);
             Article article = articleRepository.findById(ligne.getArticle().getId())
-                    .orElseThrow(() -> new IllegalArgumentException("Article introuvable avec l'ID : " + ligne.getArticle().getId()));
+                    .orElseThrow(() -> new IllegalArgumentException("Mise à jour du modèle impossible : l'article avec l'ID " + ligne.getArticle().getId() + " n'existe pas."));
             ligne.setArticle(article);
         });
 
         Modele updatedModele = modeleRepository.save(modele);
         return modeleMapper.toResponse(updatedModele);
+    }
+
+    // NOUVEAU : Méthode de suppression
+    @Override
+    public void deleteModele(Long id) {
+        if (!modeleRepository.existsById(id)) {
+            throw new IllegalArgumentException("Impossible de supprimer : le modèle avec l'ID " + id + " n'existe pas.");
+        }
+        // Grâce au orphanRemoval = true dans ton entité Modele,
+        // la suppression du modèle supprimera proprement ses lignes de nomenclature en cascade.
+        modeleRepository.deleteById(id);
     }
 }

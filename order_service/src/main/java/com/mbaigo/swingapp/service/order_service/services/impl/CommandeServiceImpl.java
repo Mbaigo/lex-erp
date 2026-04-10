@@ -28,34 +28,26 @@ import java.util.stream.Collectors;
 public class CommandeServiceImpl implements CommandeService {
 
     private final CommandeRepository commandeRepository;
-    private final CatalogServiceClient catalogClient; // Notre pont vers le microservice Catalogue !
-    private final CommandeMapper commandeMapper; // Je le commente pour l'instant, on le fera avec MapStruct
+    private final CatalogServiceClient catalogClient;
+    private final CommandeMapper commandeMapper;
 
     @Override
     public CommandeResponse createCommande(CommandeRequest request) {
-        // 1. Initialiser la commande avec les données du Modèle
         Commande commande = initCommandeBase(request);
-
-        // 2. Optimisation Réseau : Récupérer tous les articles en 1 seule requête
         Map<Long, CatalogArticleDTO> catalogueArticles = fetchArticlesEnBatch(request.materiaux());
-
-        // 3. Construire les lignes avec les snapshots de prix
         List<LigneMateriauCommande> lignes = buildLignesMateriaux(commande, request.materiaux(), catalogueArticles);
+
         commande.getMateriaux().addAll(lignes);
-
-        // 4. Calculer le total et sauvegarder
         commande.calculerPrixTotal();
-        Commande savedCommande = commandeRepository.save(commande);
 
+        Commande savedCommande = commandeRepository.save(commande);
         return commandeMapper.toResponse(savedCommande);
     }
 
-    // =========================================================
-    // MÉTHODES PRIVÉES DE FACTORISATION
-    // =========================================================
-
     private Commande initCommandeBase(CommandeRequest request) {
+        // FeignException (ex: 404 Not Found) sera interceptée globalement si le modèle n'existe pas.
         CatalogModeleDTO modele = catalogClient.getModeleById(request.modeleId());
+
         return Commande.builder()
                 .reference("CMD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .clientId(request.clientId())
@@ -66,16 +58,18 @@ public class CommandeServiceImpl implements CommandeService {
     }
 
     private Map<Long, CatalogArticleDTO> fetchArticlesEnBatch(List<LigneMateriauCommandeRequest> materiauxReq) {
-        // Extraction des IDs uniques
+        if (materiauxReq == null || materiauxReq.isEmpty()) {
+            // Sécurité supplémentaire même si le DTO a @NotEmpty
+            throw new IllegalArgumentException("La commande doit contenir au moins un matériau.");
+        }
+
         List<Long> articleIds = materiauxReq.stream()
                 .map(LigneMateriauCommandeRequest::articleId)
                 .distinct()
                 .collect(Collectors.toList());
 
-        // Appel Feign unique
         List<CatalogArticleDTO> articlesDuCatalogue = catalogClient.getArticlesInBatch(articleIds);
 
-        // Conversion en Dictionnaire (Map) pour une recherche ultra-rapide
         return articlesDuCatalogue.stream()
                 .collect(Collectors.toMap(CatalogArticleDTO::id, article -> article));
     }
@@ -87,14 +81,14 @@ public class CommandeServiceImpl implements CommandeService {
             CatalogArticleDTO article = articleMap.get(reqLigne.articleId());
 
             if (article == null) {
-                throw new IllegalArgumentException("L'article avec l'ID " + reqLigne.articleId() + " n'existe pas dans le catalogue.");
+                throw new IllegalArgumentException("Impossible de créer la commande. L'article avec l'ID " + reqLigne.articleId() + " n'existe pas dans le catalogue.");
             }
 
             return LigneMateriauCommande.builder()
-                    .commande(commande) // Lien parent
+                    .commande(commande)
                     .articleId(article.id())
                     .quantite(reqLigne.quantite())
-                    .prixUnitaireSnapshot(article.prixAchat()) // Snapshot figé
+                    .prixUnitaireSnapshot(article.prixAchat())
                     .build();
         }).collect(Collectors.toList());
     }
@@ -103,7 +97,7 @@ public class CommandeServiceImpl implements CommandeService {
     @Transactional(readOnly = true)
     public CommandeResponse getCommandeById(Long id) {
         Commande commande = commandeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Commande introuvable avec l'ID : " + id));
+                .orElseThrow(() -> new IllegalArgumentException("La commande avec l'ID " + id + " est introuvable."));
         return commandeMapper.toResponse(commande);
     }
 
@@ -119,16 +113,14 @@ public class CommandeServiceImpl implements CommandeService {
     @Override
     public CommandeResponse updateStatut(Long id, StatutCommande nouveauStatut) {
         Commande commande = commandeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Commande introuvable."));
+                .orElseThrow(() -> new IllegalArgumentException("La commande avec l'ID " + id + " est introuvable."));
 
-        // Règle métier : On ne modifie pas le statut d'une commande annulée ou déjà terminée
         if (commande.getStatut() == StatutCommande.ANNULEE || commande.getStatut() == StatutCommande.TERMINEE) {
-            throw new IllegalStateException("Impossible de modifier le statut d'une commande " + commande.getStatut());
+            throw new IllegalStateException("Opération impossible : le statut d'une commande déjà '" + commande.getStatut() + "' ne peut pas être modifié.");
         }
 
-        // Règle métier : Si on veut annuler, on force à utiliser la méthode dédiée au rollback
         if (nouveauStatut == StatutCommande.ANNULEE) {
-            throw new IllegalArgumentException("Pour annuler une commande, veuillez utiliser l'action d'annulation (qui gère les stocks).");
+            throw new IllegalArgumentException("Pour annuler une commande, vous devez utiliser la procédure de Rollback dédiée (annulerCommande).");
         }
 
         commande.setStatut(nouveauStatut);
@@ -139,28 +131,25 @@ public class CommandeServiceImpl implements CommandeService {
     @Override
     public CommandeResponse annulerCommande(Long id) {
         Commande commande = commandeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Commande introuvable."));
+                .orElseThrow(() -> new IllegalArgumentException("La commande avec l'ID " + id + " est introuvable."));
 
         if (commande.getStatut() == StatutCommande.ANNULEE) {
-            throw new IllegalStateException("Cette commande est déjà annulée.");
+            throw new IllegalStateException("Cette commande a déjà été annulée.");
         }
 
-        // US 6.2 : LE ROLLBACK DISTRIBUÉ
-        // 1. On prépare la liste de tous les articles et quantités à rendre au stock
         List<RestockItemRequest> elementsARecrediter = commande.getMateriaux().stream()
                 .map(ligne -> new RestockItemRequest(ligne.getArticleId(), ligne.getQuantite()))
                 .collect(Collectors.toList());
 
-        // 2. On appelle le microservice Catalogue via Feign pour faire le restock
         if (!elementsARecrediter.isEmpty()) {
+            // Si cette ligne échoue (ex: 500 sur le catalogue), une FeignException sera levée.
+            // La transaction sera annulée (Rollback local), et le ControllerAdvice renverra une 500 propre au client.
             catalogClient.restockArticles(elementsARecrediter);
         }
 
-        // 3. Si le catalogue a répondu sans erreur (200 OK), on annule notre commande
         commande.setStatut(StatutCommande.ANNULEE);
         Commande savedCommande = commandeRepository.save(commande);
 
         return commandeMapper.toResponse(savedCommande);
     }
-
 }
