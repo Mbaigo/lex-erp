@@ -13,7 +13,7 @@ import java.util.List;
 
 // name = nom du microservice (utile plus tard si tu utilises un Service Discovery comme Eureka)
 // url = l'adresse en dur pour l'instant pendant notre développement local
-@FeignClient(name = "catalog-inventory-service", url = "http://localhost:8082")
+@FeignClient(name = "catalog-inventory-service", url = "http://localhost:8085")
 public interface CatalogServiceClient {
 
     // On imite exactement le endpoint du CatalogController !

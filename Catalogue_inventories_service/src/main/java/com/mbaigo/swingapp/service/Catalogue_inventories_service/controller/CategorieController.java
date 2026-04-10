@@ -23,7 +23,7 @@ public class CategorieController {
     private final CategorieService categorieService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER','TAILOR')")
     @Operation(summary = "Créer une nouvelle catégorie", description = "Ajoute une nouvelle catégorie dans le catalogue de l'atelier.")
     public ResponseEntity<CategorieResponse> createCategorie(@Valid @RequestBody CategorieRequest request) {
         CategorieResponse response = categorieService.createCategorie(request);
