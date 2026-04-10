@@ -1,4 +1,4 @@
-package com.mbaigo.swingapp.service.Catalogue_inventories_service.config;
+package com.mbaigo.swingapp.service.order_service.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;

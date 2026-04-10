@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class CommandeController {
     private final CommandeService commandeService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('MANAGER', 'TAILOR')")
     @Operation(summary = "US 5.1/5.2/5.3 - Créer une nouvelle commande",
             description = "Instancie une commande, applique les substitutions de tissus et fige les prix (snapshot).")
     public ResponseEntity<CommandeResponse> createCommande(@Valid @RequestBody CommandeRequest request) {
@@ -31,6 +33,7 @@ public class CommandeController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'TAILOR')")
     @Operation(summary = "Récupérer une commande par son ID",
             description = "Affiche le détail de la commande avec ses lignes de matériaux et le prix total calculé.")
     public ResponseEntity<CommandeResponse> getCommandeById(@PathVariable Long id) {
@@ -38,6 +41,7 @@ public class CommandeController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('MANAGER', 'TAILOR')")
     @Operation(summary = "Lister toutes les commandes",
             description = "Retourne l'ensemble des commandes de l'atelier.")
     public ResponseEntity<List<CommandeResponse>> getAllCommandes() {
@@ -45,6 +49,7 @@ public class CommandeController {
     }
 
     @PatchMapping("/{id}/statut")
+    @PreAuthorize("hasAnyRole('MANAGER', 'TAILOR')")
     @Operation(summary = "US 6.1 - Mettre à jour le statut", description = "Fait avancer la commande dans le workflow de production.")
     public ResponseEntity<CommandeResponse> updateStatut(
             @PathVariable Long id,
