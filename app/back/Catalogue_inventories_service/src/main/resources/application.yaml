@@ -1,0 +1,46 @@
+
+  server:
+    port: 8085
+
+  spring:
+    application:
+      name: Catalogue_inventories_service
+
+    # Configuration PostgreSQL
+    datasource:
+      url: jdbc:postgresql://localhost:5432/couture_catalog_service # Assure-toi de créer cette DB
+      username: dev_user
+      password: dev_password # Ton mot de passe défini dans docker-compose
+      driver-class-name: org.postgresql.Driver
+
+    jpa:
+      hibernate:
+        ddl-auto: update # Pratique pour le dev
+      show-sql: true
+        #properties:
+        #hibernate:
+        #format_sql: true
+      #dialect: org.hibernate.dialect.PostgreSQLDialect
+
+    # Configuration de la sécurité (Resource Server)
+    security:
+      oauth2:
+        resourceserver:
+          jwt:
+            # C'est l'URL exacte de ton Realm.
+            # Spring Boot va appeler cette URL au démarrage pour récupérer les clés publiques de Keycloak.
+            issuer-uri: http://localhost:9090/realms/lex-couture
+
+    logging:
+      level:
+        # On met Spring Security en mode "bavard" (TRACE) pour voir exactement
+        # pourquoi il rejette le jeton.
+        org.springframework.security: TRACE
+        org.springframework.security.oauth2: TRACE
+  # Configuration Swagger (Pour pouvoir envoyer le token via l'interface)
+  springdoc:
+    api-docs:
+      path: /v3/api-docs
+    swagger-ui:
+      path: /swagger-ui.html
+
