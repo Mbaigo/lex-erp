@@ -1,0 +1,51 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: api-gateway
+
+  logging:
+    level:
+      org.springframework.cloud.gateway: TRACE
+      org.springframework.http.server.reactive: DEBUG
+
+  cloud:
+    gateway:
+      server:
+        web flux:
+          routes:
+            # Route vers le Order Service (Port 8084)
+            - id: order_service
+              uri: http://localhost:8084
+              predicates:
+                - Path=/api/v1/commandes/**
+
+            # Route vers le Catalog Service (Port 8085)
+            - id: catalog_inventories_service
+              uri: http://localhost:8085
+              predicates:
+                # CORRECTION : Strictement aucun espace après les virgules !
+                - Path=/api/v1/articles/**,/api/v1/categories/**,/api/v1/modeles/**
+
+            # Route vers le Customer Service (Port 8081)
+            - id: customer-service
+              uri: http://localhost:8081
+              predicates:
+                # CORRECTION : Remplacement par le bon chemin pour les clients
+                - Path=/api/v1/clients**, /api/v1/fiches-mesures/** # Adapte ceci avec les vrais contrôleurs de ton customer-service !
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:3000"
+              - "http://localhost:5173"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"

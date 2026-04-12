@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: couture_db
+    environment:
+      POSTGRES_DB: couture_erp
+      POSTGRES_USER: dev_user
+      POSTGRES_PASSWORD: dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    restart: always
+
+  # Optionnel : Interface Web pour voir tes tables sans installer d'outil
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: couture_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@couture.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0 # Version stable récente
+    container_name: couture_keycloak
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      # Optimisations pour éviter les avertissements en dev
+      - KC_HEALTH_ENABLED=true
+      - KC_METRICS_ENABLED=true
+    command: start-dev
+    ports:
+      - "9090:8080"
