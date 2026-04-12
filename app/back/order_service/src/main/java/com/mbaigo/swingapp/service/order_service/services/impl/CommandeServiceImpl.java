@@ -14,6 +14,10 @@ import com.mbaigo.swingapp.service.order_service.mappers.CommandeMapper;
 import com.mbaigo.swingapp.service.order_service.repositories.CommandeRepository;
 import com.mbaigo.swingapp.service.order_service.services.CommandeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -149,23 +153,10 @@ public class CommandeServiceImpl implements CommandeService {
             // La transaction sera annulée (Rollback local), et le ControllerAdvice renverra une 500 propre au client.
             catalogClient.restockArticles(elementsARecrediter);
         }
-
         commande.setStatut(StatutCommande.ANNULEE);
         Commande savedCommande = commandeRepository.save(commande);
 
         return commandeMapper.toResponse(savedCommande);
-    }
-
-    @Transactional(readOnly = true)
-    public List<CommandeResponse> getRendezVousParPeriode(String periode) {
-        BornesPeriode bornes = calculerBornesPeriode(periode);
-
-        List<Commande> commandes = commandeRepository
-                .findByDateRendezVousBetweenOrderByDateRendezVousAsc(bornes.debut(), bornes.fin());
-
-        return commandes.stream()
-                .map(commandeMapper::toResponse)
-                .toList();
     }
 
     // --- MÉTHODES PRIVÉES ---
@@ -195,5 +186,49 @@ public class CommandeServiceImpl implements CommandeService {
 
             default -> throw new IllegalArgumentException("Période de filtre non reconnue : " + periode);
         };
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CommandeResponse> getCommandesParStatut(StatutCommande statut, Pageable pageable) {
+        StatutCommande statutCible = (statut != null) ? statut : StatutCommande.CREEE;
+
+        // On construit un nouveau Pageable qui inclut notre logique de tri
+        Pageable pageableTrie = appliquerTriDynamique(statutCible, pageable);
+
+        return commandeRepository.findByStatut(statutCible, pageableTrie)
+                .map(commandeMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CommandeResponse> getRendezVousParPeriode(String periode, Pageable pageable) {
+        BornesPeriode bornes = calculerBornesPeriode(periode);
+
+        // Pour le planning, on peut imaginer que le statut n'est pas forcément connu à l'avance,
+        // on applique par défaut le tri ASC (plus ancien au plus récent)
+        Pageable pageableTrie = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by("dateCreation").ascending()
+        );
+
+        return commandeRepository
+                .findByDateRendezVousBetween(bornes.debut(), bornes.fin(), pageableTrie)
+                .map(commandeMapper::toResponse);
+    }
+
+    // --- LOGIQUE DE TRI ---
+    private Pageable appliquerTriDynamique(StatutCommande statut, Pageable pageable) {
+        // Règle : Si TERMINEE -> Décroissant (plus récent d'abord), sinon Croissant (plus ancien d'abord)
+        Sort sort = (statut == StatutCommande.TERMINEE)
+                ? Sort.by("dateCreation").descending()
+                : Sort.by("dateCreation").ascending();
+
+        return PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                sort
+        );
     }
 }
