@@ -24,5 +24,9 @@ public record ModeleRequest(
 
         @NotEmpty(message = "Un modèle doit contenir au moins un article dans sa nomenclature")
         @Valid
-        List<LigneNomenclatureRequest> lignes
+        List<LigneNomenclatureRequest> lignes,
+
+        @NotEmpty(message = "Un modèle doit contenir au moins une image dans sa nomenclature")
+        @Valid
+        String imageUrl
 ) {}

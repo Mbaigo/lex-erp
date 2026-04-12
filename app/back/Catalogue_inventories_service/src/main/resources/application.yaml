@@ -44,3 +44,6 @@
     swagger-ui:
       path: /swagger-ui.html
 
+  app:
+    storage:
+      images-dir: ./uploads/modeles/ # Le dossier sera créé à la racine de ton projet

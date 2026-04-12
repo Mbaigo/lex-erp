@@ -10,5 +10,6 @@ public record ModeleResponse(
         String description,
         BigDecimal coutMainOeuvre,
         BigDecimal coutDeBase, // Calculé dynamiquement (Main d'œuvre + Total des lignes)
-        List<LigneNomenclatureResponse> lignesNomenclature
+        List<LigneNomenclatureResponse> lignesNomenclature,
+        String imageUrl
 ) {}
