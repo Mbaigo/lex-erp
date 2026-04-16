@@ -13,6 +13,8 @@ public interface FicheMesureMapper {
 
     // On dit à MapStruct d'aller chercher l'ID du client pour le mettre dans le DTO
     @Mapping(target = "clientId", source = "entity.client.id")
+    @Mapping(target = "clientNom", source = "entity.client.nom")
+    @Mapping(target = "clientPrenom", source = "entity.client.prenom")
     FicheMesureResponseDTO toDto(FicheMesure entity);
 
     @Mapping(target = "id", ignore = true)

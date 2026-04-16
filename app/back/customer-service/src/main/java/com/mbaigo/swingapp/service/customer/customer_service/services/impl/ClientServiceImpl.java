@@ -15,7 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -47,12 +47,12 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     @Transactional(readOnly = true)
-    public ClientResponseDTO getClientByTelephone(String telephone) {
+    public Optional<ClientResponseDTO> getClientByTelephone(String telephone) {
         String telNormalise = normaliserTelephone(telephone);
 
-        return clientRepository.findByTelephone(telNormalise)
+        return Optional.of(clientRepository.findByTelephone(telNormalise)
                 .map(clientMapper::toDto) // Utilisation élégante avec les method references
-                .orElseThrow(() -> new EntityNotFoundException("Aucun client trouvé avec le numéro : " + telNormalise));
+                .orElseThrow(() -> new EntityNotFoundException("Aucun client trouvé avec le numéro : " + telNormalise)));
     }
 
     @Override
@@ -81,5 +81,10 @@ public class ClientServiceImpl implements ClientService {
         Pageable pageable = PageRequest.of(page, size, Sort.by("nom").ascending());
         return clientRepository.findAll(pageable)
                 .map(clientMapper::toDto);
+    }
+
+    @Override
+    public Optional<ClientResponseDTO> getClientById(Long id) {
+        return clientRepository.findById(id).map(clientMapper::toDto);
     }
 }

@@ -5,6 +5,7 @@ import com.mbaigo.swingapp.service.customer.customer_service.dto.FicheMesureResp
 import com.mbaigo.swingapp.service.customer.customer_service.services.FicheMesureService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -56,5 +57,14 @@ public class FicheMesureController {
             @PathVariable Long id,
             @Valid @RequestBody FicheMesureRequestDTO requestDTO) {
         return ResponseEntity.ok(ficheMesureService.updateFicheMesure(id, requestDTO));
+    }
+
+    // --- US : Récupérer TOUTES les fiches de mesures (Paginé) ---
+    @GetMapping
+    @PreAuthorize("hasAnyRole('MANAGER', 'TAILOR')")
+    public ResponseEntity<Page<FicheMesureResponseDTO>> getAllFiches(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(ficheMesureService.getAllFiches(page, size));
     }
 }
