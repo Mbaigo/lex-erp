@@ -5,9 +5,21 @@ spring:
   application:
     name: api-gateway
 
+  # 1. Configuration de la sécurité OAuth2
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # URL de ton Realm Keycloak (doit être accessible par la Gateway)
+          issuer-uri: http://localhost:9090/realms/lex-couture
+
   cloud:
     gateway:
-      # LES ROUTES DOIVENT ÊTRE DIRECTEMENT ICI
+      # 2. Filtre par défaut pour toutes les routes
+      default-filters:
+        - TokenRelay # Transmet automatiquement le header 'Authorization: Bearer ...' aux microservices
+
+      # 3. Vos routes adaptées
       routes:
         # Route vers le Order Service (Port 8084)
         - id: order_service
@@ -21,14 +33,13 @@ spring:
           predicates:
             - Path=/api/v1/articles/**,/api/v1/categories/**,/api/v1/modeles/**
 
-        # Route vers le Customer Service (Port 8081)
+        # Route vers le Customer Service (Port 8083)
         - id: customer-service
-          uri: http://localhost:8081
+          uri: http://localhost:8083
           predicates:
-            # STRICTEMENT AUCUN ESPACE ICI !
             - Path=/api/v1/clients/**,/api/v1/fiches-mesures/**
 
-      # CONFIGURATION CORS
+      # 4. CONFIGURATION CORS (Mise à jour pour autoriser l'Authorization header)
       globalcors:
         cors-configurations:
           '[/**]':
@@ -43,3 +54,4 @@ spring:
               - DELETE
               - OPTIONS
             allowedHeaders: "*"
+            allowCredentials: true # Important pour certains échanges OAuth2
