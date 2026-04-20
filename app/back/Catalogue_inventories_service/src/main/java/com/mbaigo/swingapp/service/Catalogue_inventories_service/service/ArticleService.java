@@ -3,6 +3,7 @@ package com.mbaigo.swingapp.service.Catalogue_inventories_service.service;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleResponse;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.reStock.RestockItemRequest;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public interface ArticleService {
     ArticleResponse updateStock(String reference, Double quantite, boolean isDebit);
 
     // Méthodes classiques utiles
-    List<ArticleResponse> getAllArticles();
+    Page<ArticleResponse> getAllArticles(int page, int size);
     ArticleResponse getArticleById(Long id);
 
     List<ArticleResponse> getArticlesByIds(List<Long> ids);

@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -53,9 +54,10 @@ public class ArticleController {
     @GetMapping
     @PreAuthorize("hasAnyRole('MANAGER', 'TAILOR')")
     @Operation(summary = "Lister tous les articles", description = "Récupère l'inventaire complet de l'atelier.")
-    public ResponseEntity<List<ArticleResponse>> getAllArticles() {
-        List<ArticleResponse> responses = articleService.getAllArticles();
-        return ResponseEntity.ok(responses);
+    public ResponseEntity<Page<ArticleResponse>> getAllArticles(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(articleService.getAllArticles(page, size));
     }
 
     @GetMapping("/{id}")

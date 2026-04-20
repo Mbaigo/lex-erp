@@ -14,16 +14,14 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         http
-                .csrf(ServerHttpSecurity.CsrfSpec::disable) // Souvent désactivé pour les API stateless
-                .authorizeExchange(exchanges -> exchanges
-                        // On laisse passer Swagger et les routes d'auth si besoin
-                        .pathMatchers("/webjars/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        // Toutes les autres requêtes vers les microservices demandent un token
+                .csrf(csrf -> csrf.disable())
+                .authorizeExchange(exchange -> exchange
+                        .pathMatchers("/swagger-ui/**", "/v3/api-docs/**", "/webjars/**").permitAll()
                         .anyExchange().authenticated()
                 )
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(Customizer.withDefaults())
-                );
+                // On configure la Gateway comme un client OAuth2 (Login)
+                .oauth2Client(Customizer.withDefaults())
+                .oauth2Login(Customizer.withDefaults()); // Permet la redirection vers Keycloak si non connecté
 
         return http.build();
     }

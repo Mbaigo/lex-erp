@@ -22,6 +22,5 @@ public record ClientRequestDTO(
 
         Genre genre,
 
-        String notesMorphologie,
-        String adresse
+        String notesMorphologie
 ) {}

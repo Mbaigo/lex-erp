@@ -10,6 +10,10 @@ import com.mbaigo.swingapp.service.Catalogue_inventories_service.repositories.Ar
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.repositories.CategorieRepository;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.service.ArticleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -75,11 +79,10 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ArticleResponse> getAllArticles() {
-        return articleRepository.findAll()
-                .stream()
-                .map(articleMapper::toResponse)
-                .collect(Collectors.toList());
+    public Page<ArticleResponse> getAllArticles(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("nom").ascending());
+        return articleRepository.findAll(pageable)
+                .map(articleMapper::toResponse);
     }
 
     @Override

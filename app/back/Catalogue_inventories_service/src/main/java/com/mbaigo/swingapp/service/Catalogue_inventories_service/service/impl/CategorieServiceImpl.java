@@ -7,6 +7,10 @@ import com.mbaigo.swingapp.service.Catalogue_inventories_service.mappers.Categor
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.repositories.CategorieRepository;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.service.CategorieService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,11 +36,10 @@ public class CategorieServiceImpl implements CategorieService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CategorieResponse> getAllCategories() {
-        return categorieRepository.findAll()
-                .stream()
-                .map(categorieMapper::toResponse)
-                .collect(Collectors.toList());
+    public Page<CategorieResponse> getAllCategories(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("nom").ascending());
+        return categorieRepository.findAll(pageable)
+                .map(categorieMapper::toResponse);
     }
 
     @Override

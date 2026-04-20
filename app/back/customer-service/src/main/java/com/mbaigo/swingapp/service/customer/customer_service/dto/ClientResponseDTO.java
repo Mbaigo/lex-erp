@@ -12,6 +12,5 @@ public record ClientResponseDTO(
         String email,
         Genre genre,
         String notesMorphologie,
-        LocalDateTime dateCreation,
-        String adresse
+        LocalDateTime dateCreation
 ) {}

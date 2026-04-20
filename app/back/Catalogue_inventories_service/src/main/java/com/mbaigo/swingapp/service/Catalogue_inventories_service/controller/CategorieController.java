@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,9 +34,10 @@ public class CategorieController {
     @GetMapping
     @PreAuthorize("hasAnyRole('MANAGER')")
     @Operation(summary = "Lister toutes les catégories", description = "Récupère la liste complète des catégories disponibles.")
-    public ResponseEntity<List<CategorieResponse>> getAllCategories() {
-        List<CategorieResponse> responses = categorieService.getAllCategories();
-        return ResponseEntity.ok(responses);
+    public ResponseEntity<Page<CategorieResponse>> getAllCategories(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(categorieService.getAllCategories(page,size));
     }
 
     @GetMapping("/{id}")

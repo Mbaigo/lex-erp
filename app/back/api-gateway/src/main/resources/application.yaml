@@ -8,10 +8,15 @@ spring:
   # 1. Configuration de la sécurité OAuth2
   security:
     oauth2:
-      resourceserver:
-        jwt:
-          # URL de ton Realm Keycloak (doit être accessible par la Gateway)
-          issuer-uri: http://localhost:9090/realms/lex-couture
+      client:
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:9090/realms/lex-couture
+        registration:
+          keycloak:
+            client-id: frontend-client # Celui configuré dans Keycloak
+            client-secret:  # Si ton client est "confidential"
+            scope: openid, profile, email
 
   cloud:
     gateway:
