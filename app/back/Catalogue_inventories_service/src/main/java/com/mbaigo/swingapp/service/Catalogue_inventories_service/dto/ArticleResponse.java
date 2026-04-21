@@ -1,7 +1,9 @@
 package com.mbaigo.swingapp.service.Catalogue_inventories_service.dto;
 
-import java.math.BigDecimal;
+import lombok.Builder;
 
+import java.math.BigDecimal;
+@Builder
 public record ArticleResponse(
         Long id,
         String reference,

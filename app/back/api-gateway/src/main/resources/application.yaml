@@ -5,52 +5,42 @@ spring:
   application:
     name: api-gateway
 
-  # 1. Configuration de la sécurité OAuth2
   security:
     oauth2:
-      client:
-        provider:
-          keycloak:
-            issuer-uri: http://localhost:9090/realms/lex-couture
-        registration:
-          keycloak:
-            client-id: frontend-client # Celui configuré dans Keycloak
-            client-secret:  # Si ton client est "confidential"
-            scope: openid, profile, email
+      # CHANGEMENT : On configure le Gateway comme Resource Server pour valider les tokens
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9090/realms/lex-couture
+          # Optionnel : si Keycloak est lent, ajoute l'URI directe des clés
+          # jwk-set-uri: http://localhost:9090/realms/lex-couture/protocol/openid-connect/certs
 
   cloud:
     gateway:
-      # 2. Filtre par défaut pour toutes les routes
       default-filters:
-        - TokenRelay # Transmet automatiquement le header 'Authorization: Bearer ...' aux microservices
+        - TokenRelay # Transmet le jeton aux microservices (Order, Catalog, etc.)
 
-      # 3. Vos routes adaptées
       routes:
-        # Route vers le Order Service (Port 8084)
         - id: order_service
           uri: http://localhost:8084
           predicates:
             - Path=/api/v1/commandes/**
 
-        # Route vers le Catalog Service (Port 8085)
         - id: catalog_inventories_service
           uri: http://localhost:8085
           predicates:
             - Path=/api/v1/articles/**,/api/v1/categories/**,/api/v1/modeles/**
 
-        # Route vers le Customer Service (Port 8083)
         - id: customer-service
           uri: http://localhost:8083
           predicates:
             - Path=/api/v1/clients/**,/api/v1/fiches-mesures/**
 
-      # 4. CONFIGURATION CORS (Mise à jour pour autoriser l'Authorization header)
       globalcors:
         cors-configurations:
           '[/**]':
             allowedOrigins:
+              - "http://localhost:5173" # Ton port Vite
               - "http://localhost:3000"
-              - "http://localhost:5173"
             allowedMethods:
               - GET
               - POST
@@ -59,4 +49,6 @@ spring:
               - DELETE
               - OPTIONS
             allowedHeaders: "*"
-            allowCredentials: true # Important pour certains échanges OAuth2
+            allowCredentials: true
+            # On expose certains headers si ton frontend en a besoin (ex: pagination)
+            exposedHeaders: "Content-Disposition, Authorization"

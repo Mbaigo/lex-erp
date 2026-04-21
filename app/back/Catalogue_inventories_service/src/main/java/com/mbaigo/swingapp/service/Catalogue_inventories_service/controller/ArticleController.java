@@ -3,6 +3,7 @@ package com.mbaigo.swingapp.service.Catalogue_inventories_service.controller;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleResponse;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.reStock.RestockItemRequest;
+import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.reStock.StockMovementRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.service.ArticleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,9 +46,8 @@ public class ArticleController {
     @Operation(summary = "US 3.3 - Mouvement de stock (Débit/Crédit)", description = "Permet de décrémenter (isDebit=true) ou incrémenter (isDebit=false) le stock d'un article de manière transactionnelle.")
     public ResponseEntity<ArticleResponse> updateStock(
             @PathVariable String reference,
-            @RequestParam Double quantite,
-            @RequestParam boolean isDebit) {
-        ArticleResponse response = articleService.updateStock(reference, quantite, isDebit);
+            @Valid @RequestBody StockMovementRequest stockMovementRequest) {
+        ArticleResponse response = articleService.updateStock(reference, stockMovementRequest);
         return ResponseEntity.ok(response);
     }
 

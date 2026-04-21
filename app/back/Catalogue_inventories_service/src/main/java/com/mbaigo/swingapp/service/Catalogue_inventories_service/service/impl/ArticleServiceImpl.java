@@ -3,6 +3,7 @@ package com.mbaigo.swingapp.service.Catalogue_inventories_service.service.impl;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleResponse;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.reStock.RestockItemRequest;
+import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.reStock.StockMovementRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.entities.Article;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.entities.Categorie;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.mappers.ArticleMapper;
@@ -55,22 +56,22 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    public ArticleResponse updateStock(String reference, Double quantite, boolean isDebit) {
-        if (quantite <= 0) {
+    public ArticleResponse updateStock(String reference, StockMovementRequest stock) {
+        if (stock.quantite() <= 0) {
             throw new IllegalArgumentException("La quantité à modifier doit être strictement positive.");
         }
 
         Article article = articleRepository.findByReference(reference)
                 .orElseThrow(() -> new IllegalArgumentException("Mouvement de stock impossible : l'article avec la référence '" + reference + "' est introuvable."));
 
-        if (isDebit) {
-            if (article.getQuantiteEnStock() < quantite) {
+        if (stock.isDebit()) {
+            if (article.getQuantiteEnStock() < stock.quantite()) {
                 // Intercepté par le GlobalExceptionHandler -> Renvoie une 409 Conflict
                 throw new IllegalStateException("Stock insuffisant pour l'article '" + reference + "'. Stock actuel : " + article.getQuantiteEnStock());
             }
-            article.setQuantiteEnStock(article.getQuantiteEnStock() - quantite);
+            article.setQuantiteEnStock(article.getQuantiteEnStock() - stock.quantite());
         } else {
-            article.setQuantiteEnStock(article.getQuantiteEnStock() + quantite);
+            article.setQuantiteEnStock(article.getQuantiteEnStock() + stock.quantite());
         }
 
         Article updatedArticle = articleRepository.save(article);

@@ -14,14 +14,17 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable()) // Désactivé pour les APIs
                 .authorizeExchange(exchange -> exchange
-                        .pathMatchers("/swagger-ui/**", "/v3/api-docs/**", "/webjars/**").permitAll()
+                        // On laisse passer les requêtes OPTIONS (Preflight CORS)
+                        .pathMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        // On autorise tout le reste (le filtrage se fera via le jeton)
                         .anyExchange().authenticated()
                 )
-                // On configure la Gateway comme un client OAuth2 (Login)
-                .oauth2Client(Customizer.withDefaults())
-                .oauth2Login(Customizer.withDefaults()); // Permet la redirection vers Keycloak si non connecté
+                // ON REMPLACE oauth2Login() PAR oauth2ResourceServer()
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(Customizer.withDefaults())
+                );
 
         return http.build();
     }

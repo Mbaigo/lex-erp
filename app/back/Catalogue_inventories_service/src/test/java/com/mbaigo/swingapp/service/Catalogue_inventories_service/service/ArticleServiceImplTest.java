@@ -2,6 +2,7 @@ package com.mbaigo.swingapp.service.Catalogue_inventories_service.service;
 
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleResponse;
+import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.reStock.StockMovementRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.entities.Article;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.entities.Categorie;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.mappers.ArticleMapper;
@@ -46,7 +47,7 @@ class ArticleServiceImplTest {
         when(articleRepository.save(any(Article.class))).thenReturn(articleEnBase);
 
         // Act
-        articleService.updateStock("TIS-01", 3.0, true);
+        articleService.updateStock("TIS-01", new StockMovementRequest(3.0, true,""));
 
         // Assert
         assertThat(articleEnBase.getQuantiteEnStock()).isEqualTo(7.0);
@@ -61,7 +62,7 @@ class ArticleServiceImplTest {
         when(articleRepository.findByReference("TIS-01")).thenReturn(Optional.of(articleEnBase));
 
         // Act & Assert
-        assertThatThrownBy(() -> articleService.updateStock("TIS-01", 5.0, true))
+        assertThatThrownBy(() -> articleService.updateStock("TIS-01", new StockMovementRequest(5.0, true, "")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Stock insuffisant");
 
