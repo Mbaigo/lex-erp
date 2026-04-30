@@ -81,7 +81,7 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     @Transactional(readOnly = true)
     public Page<ArticleResponse> getAllArticles(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("nom").ascending());
+        Pageable pageable = PageRequest.of(page, size, Sort.by("reference").ascending());
         return articleRepository.findAll(pageable)
                 .map(articleMapper::toResponse);
     }

@@ -8,7 +8,7 @@
 
     # Configuration PostgreSQL
     datasource:
-      url: jdbc:postgresql://localhost:5432/couture_customers # Assure-toi de créer cette DB
+      url: jdbc:postgresql://localhost:5432/couture_customers_db # Assure-toi de créer cette DB
       username: dev_user
       password: dev_password # Ton mot de passe défini dans docker-compose
       driver-class-name: org.postgresql.Driver
