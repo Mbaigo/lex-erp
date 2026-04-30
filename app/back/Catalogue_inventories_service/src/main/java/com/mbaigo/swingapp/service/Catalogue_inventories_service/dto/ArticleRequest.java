@@ -29,6 +29,9 @@ public record ArticleRequest(
         @Min(value = 0, message = "Le seuil d'alerte ne peut pas être négatif")
         Double seuilAlerte,
 
+        @NotNull(message = "L'unite de mesure est obligatoire: soit METRE, ROULEAU, BOITE, UNITE, ETC.")
+        String uniteMesure,
+
         @NotNull(message = "L'ID de la catégorie est obligatoire")
         Long categorieId // Le client envoie juste l'ID de la catégorie (ex: 1 pour "Mercerie")
 ) {}

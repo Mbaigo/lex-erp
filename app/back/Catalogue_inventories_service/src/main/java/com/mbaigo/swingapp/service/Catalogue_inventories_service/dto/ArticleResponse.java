@@ -11,5 +11,6 @@ public record ArticleResponse(
         Double quantiteEnStock,
         BigDecimal prixAchat,
         Double seuilAlerte,
+        Boolean enAlerte,
         CategorieResponse categorie // On imbrique la réponse de la catégorie !
 ) {}
