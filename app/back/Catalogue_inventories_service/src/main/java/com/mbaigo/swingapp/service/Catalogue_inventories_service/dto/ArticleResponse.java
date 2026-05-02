@@ -8,9 +8,10 @@ public record ArticleResponse(
         Long id,
         String reference,
         String designation,
-        Double quantiteEnStock,
-        BigDecimal prixAchat,
+        Double stockInitial,
+        BigDecimal prixUnitaire,
         Double seuilAlerte,
         Boolean enAlerte,
+        String uniteMesure,
         CategorieResponse categorie // On imbrique la réponse de la catégorie !
 ) {}

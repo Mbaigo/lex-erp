@@ -25,10 +25,10 @@ public class Article {
     private String designation; // Ex: Rouleau de Soie rouge
 
     @Column(nullable = false)
-    private Double quantiteEnStock; // Pour l'US 3.1
+    private Double stockInitial; // Pour l'US 3.1
 
     @Column(precision = 10, scale = 2)
-    private BigDecimal prixAchat; // Pour l'US 3.1
+    private BigDecimal prixUnitaire; // Pour l'US 3.1
 
     @Column(nullable = false)
     private Double seuilAlerte; // Pour l'US 3.2
@@ -42,4 +42,7 @@ public class Article {
     // Si 2 requêtes essaient de modifier le stock en même temps, la 2ème échouera proprement.
     @Version
     private Long version;
+
+    @Column(nullable = false, length=15)
+    String uniteMesure;
 }
