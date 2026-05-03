@@ -1,15 +1,14 @@
 package com.mbaigo.swingapp.service.Catalogue_inventories_service.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
+import com.mbaigo.swingapp.service.Catalogue_inventories_service.enums.TypeMovementEnum;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@Entity
+@Entity @Getter @Setter @AllArgsConstructor @NoArgsConstructor
 public class StockMovement {
 
     @Id
@@ -20,7 +19,8 @@ public class StockMovement {
 
     int quantite;
 
-    boolean isDebit; // sortie ou entrée
+    @Enumerated(EnumType.STRING)
+    private TypeMovementEnum type;
 
     BigDecimal prixUnitaire;
 
@@ -29,4 +29,6 @@ public class StockMovement {
     LocalDate dateOperation;
 
     LocalDateTime createdAt;
+    private Integer stockApresOperation;
+    private Integer stockAvantOperation;
 }

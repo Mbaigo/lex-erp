@@ -55,33 +55,11 @@ public class ArticleServiceImpl implements ArticleService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public ArticleResponse updateStock(String reference, StockMovementRequest stock) {
-        if (stock.quantite() <= 0) {
-            throw new IllegalArgumentException("La quantité à modifier doit être strictement positive.");
-        }
 
-        Article article = articleRepository.findByReference(reference)
-                .orElseThrow(() -> new IllegalArgumentException("Mouvement de stock impossible : l'article avec la référence '" + reference + "' est introuvable."));
-
-        if (stock.isDebit()) {
-            if (article.getQuantiteEnStock() < stock.quantite()) {
-                // Intercepté par le GlobalExceptionHandler -> Renvoie une 409 Conflict
-                throw new IllegalStateException("Stock insuffisant pour l'article '" + reference + "'. Stock actuel : " + article.getQuantiteEnStock());
-            }
-            article.setQuantiteEnStock(article.getQuantiteEnStock() - stock.quantite());
-        } else {
-            article.setQuantiteEnStock(article.getQuantiteEnStock() + stock.quantite());
-        }
-
-        Article updatedArticle = articleRepository.save(article);
-        return articleMapper.toResponse(updatedArticle);
-    }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ArticleResponse> getAllArticles(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("reference").ascending());
+    public Page<ArticleResponse> getAllArticles(Pageable pageable) {
         return articleRepository.findAll(pageable)
                 .map(articleMapper::toResponse);
     }
@@ -103,16 +81,7 @@ public class ArticleServiceImpl implements ArticleService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public void restockBatch(List<RestockItemRequest> requests) {
-        for (RestockItemRequest req : requests) {
-            Article article = articleRepository.findById(req.articleId())
-                    .orElseThrow(() -> new IllegalArgumentException("Restockage échoué : Article introuvable (ID: " + req.articleId() + ")"));
 
-            article.setQuantiteEnStock(article.getQuantiteEnStock() + req.quantite());
-            articleRepository.save(article);
-        }
-    }
 
     // NOUVEAU : Méthode de suppression
     @Override
@@ -123,5 +92,16 @@ public class ArticleServiceImpl implements ArticleService {
         // Si l'article est utilisé dans une Nomenclature de Modèle, JPA va jeter une DataIntegrityViolationException.
         // Le GlobalExceptionHandler la transformera en message propre pour le Gérant.
         articleRepository.deleteById(id);
+    }
+
+    @Override
+    public Page<ArticleResponse> getArticlesByCategorie(
+            Long categorieId,
+            Pageable pageable
+    ) {
+
+        return articleRepository
+                .findByCategorieId(categorieId, pageable)
+                .map(articleMapper::toResponse);
     }
 }

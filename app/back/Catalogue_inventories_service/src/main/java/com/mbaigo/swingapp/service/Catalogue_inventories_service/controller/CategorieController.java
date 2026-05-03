@@ -2,6 +2,7 @@ package com.mbaigo.swingapp.service.Catalogue_inventories_service.controller;
 
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.CategorieRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.CategorieResponse;
+import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.StockCategorieDTO;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.service.CategorieService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -53,5 +56,19 @@ public class CategorieController {
     public ResponseEntity<CategorieResponse> updateCategorie(@PathVariable Long id, @Valid @RequestBody CategorieRequest request) {
         CategorieResponse response = categorieService.updateCategorie(id, request);
         return ResponseEntity.ok(response);
+    }
+
+    // 🔥 Stock global par catégorie (dashboard)
+    @GetMapping("/stock-summary")
+    @PreAuthorize("hasAnyRole('MANAGER', 'TAILOR')")
+    public ResponseEntity<List<StockCategorieDTO>> getStockParCategorie() {
+        return ResponseEntity.ok(categorieService.getStockParCategorie());
+    }
+
+    // 🔥 Stock global d'une catégorie
+    @GetMapping("/{id}/stock")
+    @PreAuthorize("hasAnyRole('MANAGER', 'TAILOR')")
+    public ResponseEntity<Integer> getStockGlobalByCategorie(@PathVariable Long id) {
+        return ResponseEntity.ok(categorieService.getStockGlobalByCategorie(id));
     }
 }

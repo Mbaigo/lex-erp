@@ -2,14 +2,17 @@ package com.mbaigo.swingapp.service.Catalogue_inventories_service.controller;
 
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleResponse;
+import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.StockMovementResponseDTO;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.reStock.RestockItemRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.reStock.StockMovementRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.service.ArticleService;
+import com.mbaigo.swingapp.service.Catalogue_inventories_service.service.StockMovementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +27,7 @@ import java.util.List;
 public class ArticleController {
 
     private final ArticleService articleService;
+    private final StockMovementService stockMovementService;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('MANAGER')")
@@ -41,23 +45,13 @@ public class ArticleController {
         return ResponseEntity.ok(responses);
     }
 
-    @PatchMapping("/{reference}/stock")
-    @PreAuthorize("hasAnyRole('MANAGER')")
-    @Operation(summary = "US 3.3 - Mouvement de stock (Débit/Crédit)", description = "Permet de décrémenter (isDebit=true) ou incrémenter (isDebit=false) le stock d'un article de manière transactionnelle.")
-    public ResponseEntity<ArticleResponse> updateStock(
-            @PathVariable String reference,
-            @Valid @RequestBody StockMovementRequest stockMovementRequest) {
-        ArticleResponse response = articleService.updateStock(reference, stockMovementRequest);
-        return ResponseEntity.ok(response);
-    }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('MANAGER', 'TAILOR')")
     @Operation(summary = "Lister tous les articles", description = "Récupère l'inventaire complet de l'atelier.")
     public ResponseEntity<Page<ArticleResponse>> getAllArticles(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(articleService.getAllArticles(page, size));
+            Pageable pageable){
+        return ResponseEntity.ok(articleService.getAllArticles(pageable));
     }
 
     @GetMapping("/{id}")
@@ -76,12 +70,30 @@ public class ArticleController {
         return ResponseEntity.ok(responses);
     }
 
-    @PostMapping("/stock/restock-batch")
-    @PreAuthorize("hasAnyRole('MANAGER', 'TAILOR')")
-    @Operation(summary = "US 6.2 - Recréditer les stocks en masse", description = "Utilisé par le order-service lors de l'annulation d'une commande.")
-    public ResponseEntity<Void> restockBatch(@Valid @RequestBody List<RestockItemRequest> requests) {
-        articleService.restockBatch(requests);
-        return ResponseEntity.ok().build();
+    @GetMapping("/byCategory")
+    public ResponseEntity<Page<ArticleResponse>> getArticlesByCategorie(
+            @RequestParam(required = false) Long categorieId,
+            Pageable pageable
+    ) {
+        if (categorieId != null) {
+            return ResponseEntity.ok(
+                    articleService.getArticlesByCategorie(categorieId, pageable)
+            );
+        }
+
+        // fallback : tous les articles
+        return ResponseEntity.ok(articleService.getAllArticles(pageable));
     }
+
+    @GetMapping("/api/v1/articles/{id}/stock-history")
+    public ResponseEntity<Page<StockMovementResponseDTO>> getHistoryByArticleId(
+            @PathVariable Long id,
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(
+                stockMovementService.getHistoryByArticleId(id, pageable)
+        );
+    }
+
 
 }

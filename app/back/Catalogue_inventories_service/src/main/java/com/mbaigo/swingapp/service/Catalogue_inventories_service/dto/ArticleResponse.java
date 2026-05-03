@@ -1,5 +1,6 @@
 package com.mbaigo.swingapp.service.Catalogue_inventories_service.dto;
 
+import com.mbaigo.swingapp.service.Catalogue_inventories_service.enums.UniteMesureEnum;
 import lombok.Builder;
 
 import java.math.BigDecimal;
@@ -12,6 +13,6 @@ public record ArticleResponse(
         BigDecimal prixUnitaire,
         Double seuilAlerte,
         Boolean enAlerte,
-        String uniteMesure,
+        UniteMesureEnum uniteMesure,
         CategorieResponse categorie // On imbrique la réponse de la catégorie !
 ) {}

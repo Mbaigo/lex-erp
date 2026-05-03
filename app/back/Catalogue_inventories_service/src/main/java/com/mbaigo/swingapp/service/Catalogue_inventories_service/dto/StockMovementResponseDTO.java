@@ -1,5 +1,7 @@
 package com.mbaigo.swingapp.service.Catalogue_inventories_service.dto;
 
+import com.mbaigo.swingapp.service.Catalogue_inventories_service.enums.TypeMovementEnum;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,7 +16,7 @@ public record StockMovementResponseDTO(
 
         Integer quantite,
 
-        Boolean isDebit,
+        TypeMovementEnum type,
 
         BigDecimal prixUnitaire,
 
@@ -22,6 +24,7 @@ public record StockMovementResponseDTO(
 
         LocalDate dateOperation,
 
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        Integer stockApresOperation
 
 ) {}
