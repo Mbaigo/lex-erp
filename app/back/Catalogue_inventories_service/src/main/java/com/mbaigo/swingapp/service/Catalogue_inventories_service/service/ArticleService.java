@@ -2,9 +2,8 @@ package com.mbaigo.swingapp.service.Catalogue_inventories_service.service;
 
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleResponse;
-import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.reStock.RestockItemRequest;
-import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.reStock.StockMovementRequest;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -16,15 +15,15 @@ public interface ArticleService {
     // US 3.2 - Alertes de rupture
     List<ArticleResponse> getArticlesEnAlerte();
 
-    // US 3.3 - Débit/Crédit sécurisé
-    ArticleResponse updateStock(String reference, StockMovementRequest stockMovementRequest);
 
     // Méthodes classiques utiles
-    Page<ArticleResponse> getAllArticles(int page, int size);
+    Page<ArticleResponse> getAllArticles(Pageable pageable);
     ArticleResponse getArticleById(Long id);
 
     List<ArticleResponse> getArticlesByIds(List<Long> ids);
-    //Recreditation du stock en cas d'annulation d'une commande
-    void restockBatch(List<RestockItemRequest> requests);
     void deleteArticle(Long id);
+    Page<ArticleResponse> getArticlesByCategorie(
+            Long categorieId,
+            Pageable pageable
+    );
 }

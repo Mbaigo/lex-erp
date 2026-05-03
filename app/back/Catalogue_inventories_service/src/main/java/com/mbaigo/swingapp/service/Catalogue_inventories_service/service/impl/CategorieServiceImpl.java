@@ -2,8 +2,10 @@ package com.mbaigo.swingapp.service.Catalogue_inventories_service.service.impl;
 
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.CategorieRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.CategorieResponse;
+import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.StockCategorieDTO;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.entities.Categorie;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.mappers.CategorieMapper;
+import com.mbaigo.swingapp.service.Catalogue_inventories_service.repositories.ArticleRepository;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.repositories.CategorieRepository;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.service.CategorieService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ public class CategorieServiceImpl implements CategorieService {
 
     private final CategorieRepository categorieRepository;
     private final CategorieMapper categorieMapper;
+    private final ArticleRepository articleRepository;;
 
     @Override
     public CategorieResponse createCategorie(CategorieRequest request) {
@@ -72,5 +75,30 @@ public class CategorieServiceImpl implements CategorieService {
         // Si la catégorie contient encore des articles, JPA va jeter une DataIntegrityViolationException.
         // Le GlobalExceptionHandler la captera (409 Conflict).
         categorieRepository.deleteById(id);
+    }
+
+    @Override
+    public List<StockCategorieDTO> getStockParCategorie() {
+        List<StockCategorieDTO> result = categorieRepository.getStockParCategorie();
+
+        if (result.isEmpty()) {
+            return List.of(); // éviter null
+        }
+        // Exemple : filtrer les catégories sans stock
+         return result.stream()
+                .sorted((a, b) -> b.stockTotal().compareTo(a.stockTotal()))
+                .toList();
+    }
+
+
+
+    @Override
+    public Integer getStockGlobalByCategorie(Long categorieId) {
+
+        if (!categorieRepository.existsById(categorieId)) {
+            throw new RuntimeException("Catégorie introuvable");
+        }
+
+        return articleRepository.getTotalStockByCategorie(categorieId);
     }
 }

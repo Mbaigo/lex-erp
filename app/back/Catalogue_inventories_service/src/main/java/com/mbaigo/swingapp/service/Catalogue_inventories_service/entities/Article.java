@@ -1,5 +1,6 @@
 package com.mbaigo.swingapp.service.Catalogue_inventories_service.entities;
 
+import com.mbaigo.swingapp.service.Catalogue_inventories_service.enums.UniteMesureEnum;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,13 +26,16 @@ public class Article {
     private String designation; // Ex: Rouleau de Soie rouge
 
     @Column(nullable = false)
-    private Double stockInitial; // Pour l'US 3.1
+    private Integer stockInitial; // Pour l'US 3.1
+
+    @Column(nullable = false)
+    private Integer stockActuel; // Pour l'US 3.1
 
     @Column(precision = 10, scale = 2)
     private BigDecimal prixUnitaire; // Pour l'US 3.1
 
     @Column(nullable = false)
-    private Double seuilAlerte; // Pour l'US 3.2
+    private Integer seuilAlerte; // Pour l'US 3.2
 
     // Relation : Un article appartient forcément à une catégorie
     @ManyToOne(fetch = FetchType.LAZY)
@@ -43,6 +47,6 @@ public class Article {
     @Version
     private Long version;
 
-    @Column(nullable = false, length=15)
-    String uniteMesure;
+    @Enumerated(EnumType.STRING)
+    private UniteMesureEnum uniteMesure;
 }
