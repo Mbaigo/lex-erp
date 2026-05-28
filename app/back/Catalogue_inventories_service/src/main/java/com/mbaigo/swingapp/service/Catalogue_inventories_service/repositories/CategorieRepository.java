@@ -22,10 +22,11 @@ public interface CategorieRepository extends JpaRepository<Categorie, Long> {
         SELECT new com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.StockCategorieDTO(
             c.id,
             c.nom,
-            COALESCE(SUM(a.stockActuel), 0)
+            COALESCE(SUM(a.stockActuel), 0L),
+            COUNT(a.id)
         )
         FROM Categorie c
-        LEFT JOIN c.articles a
+        LEFT JOIN Article a ON a.categorie = c
         GROUP BY c.id, c.nom
     """)
     List<StockCategorieDTO> getStockParCategorie();

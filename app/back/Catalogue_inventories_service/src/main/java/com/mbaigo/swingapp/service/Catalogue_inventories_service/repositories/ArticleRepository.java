@@ -18,7 +18,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
     Optional<Article> findByReference(String reference);
 
     // US 3.2 : Trouver les articles en alerte de rupture
-    @Query("SELECT a FROM Article a WHERE a.quantiteEnStock <= a.seuilAlerte")
+    @Query("SELECT a FROM Article a WHERE a.stockActuel <= a.seuilAlerte")
     List<Article> findArticlesEnAlerte();
     Page<Article> findByCategorieId(Long categorieId, Pageable pageable);
     @Query("""

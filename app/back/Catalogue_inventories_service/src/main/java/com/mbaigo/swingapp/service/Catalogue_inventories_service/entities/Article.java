@@ -3,6 +3,7 @@ package com.mbaigo.swingapp.service.Catalogue_inventories_service.entities;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.enums.UniteMesureEnum;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Formula;
 
 import java.math.BigDecimal;
 
@@ -20,33 +21,48 @@ public class Article {
     private Long id;
 
     @Column(nullable = false, unique = true, length = 50)
-    private String reference; // Ex: TIS-SOIE-001
+    private String reference;
 
     @Column(nullable = false, length = 150)
-    private String designation; // Ex: Rouleau de Soie rouge
+    private String designation;
 
-    @Column(nullable = false)
-    private Integer stockInitial; // Pour l'US 3.1
+    @Column(nullable = false, updatable = false) // updatable = false protège cette valeur à vie
+    private Integer stockInitial;
 
-    @Column(nullable = false)
-    private Integer stockActuel; // Pour l'US 3.1
+    @Formula("""
+        (SELECT COALESCE(SUM(
+            CASE WHEN m.type = 'ENTREE' THEN m.quantite
+                 WHEN m.type = 'SORTIE' THEN -m.quantite
+                 ELSE 0 END
+        ), 0) + stock_initial 
+        FROM stock_movement m 
+        WHERE m.article_id = id)
+    """)
+    private Integer stockActuel;
 
     @Column(precision = 10, scale = 2)
-    private BigDecimal prixUnitaire; // Pour l'US 3.1
+    private BigDecimal prixUnitaire;
 
     @Column(nullable = false)
-    private Integer seuilAlerte; // Pour l'US 3.2
+    private Integer seuilAlerte;
 
-    // Relation : Un article appartient forcément à une catégorie
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categorie_id", nullable = false)
     private Categorie categorie;
 
-    // MAGIE POUR L'US 3.3 : Verrouillage optimiste
-    // Si 2 requêtes essaient de modifier le stock en même temps, la 2ème échouera proprement.
     @Version
     private Long version;
 
     @Enumerated(EnumType.STRING)
     private UniteMesureEnum uniteMesure;
+
+    // --- SÉCURITÉ JPA ---
+    @PrePersist
+    public void prePersist() {
+        if (this.stockInitial == null && this.stockActuel != null) {
+            this.stockInitial = this.stockActuel;
+        }
+    }
+
+    // Getters et Setters...
 }

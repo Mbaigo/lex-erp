@@ -34,9 +34,9 @@ public class LigneNomenclature {
 
     // Calcule le coût de cette ligne (Quantité * Prix d'achat unitaire de l'article)
     public BigDecimal getCoutLigne() {
-        if (article == null || article.getPrixAchat() == null) {
+        if (article == null || article.getPrixUnitaire() == null) {
             return BigDecimal.ZERO;
         }
-        return article.getPrixAchat().multiply(BigDecimal.valueOf(quantiteNecessaire));
+        return article.getPrixUnitaire().multiply(BigDecimal.valueOf(quantiteNecessaire));
     }
 }
