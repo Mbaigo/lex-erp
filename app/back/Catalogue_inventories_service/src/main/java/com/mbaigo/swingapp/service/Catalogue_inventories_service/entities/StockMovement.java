@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@Entity @Getter @Setter @AllArgsConstructor @NoArgsConstructor
+@Entity @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
 public class StockMovement {
 
     @Id
@@ -29,6 +29,8 @@ public class StockMovement {
     LocalDate dateOperation;
 
     LocalDateTime createdAt;
-    private Integer stockApresOperation;
+    //Le cout total du mouvement (quantite * prixUnitaire) pour faciliter les rapports et analyses
+    private BigDecimal priceTotal;
     private Integer stockAvantOperation;
+    private Integer stockApresOperation;
 }

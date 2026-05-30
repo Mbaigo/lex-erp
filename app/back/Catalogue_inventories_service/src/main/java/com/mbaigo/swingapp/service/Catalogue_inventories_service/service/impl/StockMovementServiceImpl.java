@@ -16,91 +16,84 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-@Service @RequiredArgsConstructor
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Service
+@RequiredArgsConstructor
 public class StockMovementServiceImpl implements StockMovementService {
+
     private final StockMovementRepository movementRepository;
     private final ArticleRepository articleRepository;
     private final StockMovementMapper mapper;
 
-    // 🔥 CRÉATION D’UN MOUVEMENT
+    // 🟢 CRÉATION D'UN MOUVEMENT
     @Transactional
-    public StockMovementResponseDTO createMovement(StockMovementRequestDTO dto) {
+    @Override
+    public StockMovementResponseDTO createMovement(StockMovementRequestDTO request) {
 
-        // 1️⃣ Vérifier l'article
-        Article article = articleRepository.findById(dto.articleId())
+        // 1. Vérifier l'article
+        Article article = articleRepository.findById(request.articleId())
                 .orElseThrow(() -> new RuntimeException("Article introuvable"));
 
-        // 2️⃣ Validation de la quantité
-        if (dto.quantite() == null || dto.quantite() <= 0) {
+        // 2. Validation de base (si non gérée par @Valid dans le Controller)
+        if (request.quantite() == null || request.quantite() <= 0) {
             throw new RuntimeException("Quantité invalide");
         }
 
-        // 3️⃣ Validation du type de mouvement
-        if (dto.type() == null) {
-            throw new RuntimeException("Type de mouvement obligatoire");
+        int stockAvant = article.getStockActuel() != null ? article.getStockActuel() : 0;
+
+        // 3. Vérification stock suffisant pour SORTIE
+        if (request.type() == TypeMovementEnum.SORTIE && stockAvant < request.quantite()) {
+            throw new RuntimeException("Stock insuffisant pour cette sortie. Stock actuel : " + stockAvant);
         }
 
-        // 4️⃣ Vérification stock suffisant pour SORTIE
-        if (dto.type() == TypeMovementEnum.SORTIE &&
-                article.getStockActuel() < dto.quantite()) {
-            throw new RuntimeException("Stock insuffisant");
-        }
-
-        // 5️⃣ Création du mouvement
-        StockMovement movement = mapper.toEntity(dto);
+        // 4. Création du mouvement via le Mapper (qui calcule automatiquement le priceTotal)
+        StockMovement movement = mapper.toEntity(request);
         movement.setArticle(article);
-
-        // 🔥 Toujours initialiser createdAt ici si pas fait dans mapper
         movement.setCreatedAt(LocalDateTime.now());
 
-        // 6️⃣ Calcul du nouveau stock
-        int stockAvant = article.getStockActuel();
-        int stockApres;
-
-        switch (dto.type()) {
-            case ENTREE -> stockApres = stockAvant + dto.quantite();
-            case SORTIE -> stockApres = stockAvant - dto.quantite();
-            default -> throw new RuntimeException("Type de mouvement invalide");
+        if (movement.getDateOperation() == null) {
+            movement.setDateOperation(LocalDate.now());
         }
 
-        // 7️⃣ Mise à jour du stock
-        article.setStockActuel(stockApres);
-
-        // 🔥 BONUS (audit avancé recommandé)
+        // 5. Audit : Enregistrement de l'état du stock au moment du mouvement
+        movement.setStockAvantOperation(stockAvant);
+        int stockApres = request.type() == TypeMovementEnum.ENTREE
+                ? stockAvant + request.quantite()
+                : stockAvant - request.quantite();
         movement.setStockApresOperation(stockApres);
 
-        // 8️⃣ Sauvegarde (ordre important)
-        movementRepository.save(movement);
-        articleRepository.save(article);
+        // 6. Sauvegarde
+        // ⚠️ CHANGEMENT MAJEUR : On ne fait plus article.setStockActuel()
+        // et on ne fait plus articleRepository.save(article).
+        // La base de données mettra le stockActuel à jour toute seule via la @Formula !
+        movement = movementRepository.save(movement);
 
-        return mapper.toDTO(movement);
+        return mapper.toResponse(movement);
     }
 
-    // 🔥 HISTORIQUE
-    public Page<StockMovementResponseDTO> getHistory(
-            String reference,
-            String designation,
-            Pageable pageable
-    ) {
-
-        Page<StockMovement> movements =
-                movementRepository.searchMovements(reference, designation, pageable);
-
-        return movements.map(mapper::toDTO);
-    }
-
+    // 🟢 HISTORIQUE GLOBAL
     @Override
-    public Page<StockMovementResponseDTO> getHistoryByArticleId(
-            Long articleId,
-            Pageable pageable
-    ) {
+    public Page<StockMovementResponseDTO> getHistory(String reference, String designation, Pageable pageable) {
+        return movementRepository.searchMovements(reference, designation, pageable)
+                .map(mapper::toResponse); // Utilisation de toResponse au lieu de toDTO
+    }
+
+    // 🟢 HISTORIQUE PAR ARTICLE
+    @Override
+    public Page<StockMovementResponseDTO> getHistoryByArticleId(Long articleId, Pageable pageable) {
         if (!articleRepository.existsById(articleId)) {
             throw new RuntimeException("Article introuvable");
         }
 
-        return movementRepository
-                .findByArticleId(articleId, pageable)
-                .map(mapper::toDTO);
+        return movementRepository.findByArticleId(articleId, pageable)
+                .map(mapper::toResponse);
     }
 }
