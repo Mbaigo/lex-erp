@@ -1,5 +1,6 @@
 package com.mbaigo.swingapp.service.Catalogue_inventories_service.exception;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -72,6 +73,8 @@ public class GlobalExceptionHandler {
                 request.getRequestURI(),
                 null
         );
+        Logger logger = org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
+        logger.error("Erreur inattendue: {}", ex.getMessage(), ex);
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

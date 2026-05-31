@@ -22,7 +22,7 @@ public record ArticleRequest(
 
         @NotNull(message = "La quantité en stock est obligatoire")
         @Min(value = 0, message = "Le stock initial ne peut pas être négatif")
-        Double stockInitial,
+        Long stockInitial,
 
         @NotNull(message = "Le prix d'achat est obligatoire")
         @Min(value = 0, message = "Le prix d'achat ne peut pas être négatif")

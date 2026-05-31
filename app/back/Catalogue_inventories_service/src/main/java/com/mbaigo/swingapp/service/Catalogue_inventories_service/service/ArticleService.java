@@ -17,7 +17,7 @@ public interface ArticleService {
 
 
     // Méthodes classiques utiles
-    Page<ArticleResponse> getAllArticles(Pageable pageable);
+    Page<ArticleResponse> getAllArticles(int page, int size);
     ArticleResponse getArticleById(Long id);
 
     List<ArticleResponse> getArticlesByIds(List<Long> ids);

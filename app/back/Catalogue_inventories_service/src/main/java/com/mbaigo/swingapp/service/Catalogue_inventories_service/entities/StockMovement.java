@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Entity @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
 public class StockMovement {
 
-    @Id
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -2,8 +2,6 @@ package com.mbaigo.swingapp.service.Catalogue_inventories_service.service.impl;
 
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleResponse;
-import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.reStock.RestockItemRequest;
-import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.reStock.StockMovementRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.entities.Article;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.entities.Categorie;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.mappers.ArticleMapper;
@@ -59,7 +57,8 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ArticleResponse> getAllArticles(Pageable pageable) {
+    public Page<ArticleResponse> getAllArticles(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
         return articleRepository.findAll(pageable)
                 .map(articleMapper::toResponse);
     }

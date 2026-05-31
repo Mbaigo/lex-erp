@@ -3,7 +3,6 @@ package com.mbaigo.swingapp.service.Catalogue_inventories_service.entities;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.enums.UniteMesureEnum;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Formula;
 
 import java.math.BigDecimal;
 
@@ -26,18 +25,21 @@ public class Article {
     @Column(nullable = false, length = 150)
     private String designation;
 
-    @Column(nullable = false, updatable = false) // updatable = false protège cette valeur à vie
+    @Column(name = "stock_initial", nullable = false)// updatable = false protège cette valeur à vie
     private Integer stockInitial;
 
-    @Formula("""
-        (SELECT COALESCE(SUM(
-            CASE WHEN m.type = 'ENTREE' THEN m.quantite
-                 WHEN m.type = 'SORTIE' THEN -m.quantite
-                 ELSE 0 END
-        ), 0) + stock_initial 
-        FROM stock_movement m 
-        WHERE m.article_id = id)
-    """)
+//    @Formula("""
+//        (SELECT COALESCE(SUM(
+//            CASE WHEN m.type = 'ENTREE' THEN m.quantite
+//                 WHEN m.type = 'SORTIE' THEN -m.quantite
+//                 ELSE 0 END
+//        ), 0) + stock_initial
+//        FROM stock_movement m
+//        WHERE m.article_id = id)
+//    """)
+
+    // N'est plus une @Formula. Redevient une colonne classique.
+    @Column(name = "stock_actuel", nullable = false)
     private Integer stockActuel;
 
     @Column(precision = 10, scale = 2)

@@ -28,7 +28,7 @@ spring:
         - id: catalog_inventories_service
           uri: http://localhost:8085
           predicates:
-            - Path=/api/v1/articles/**,/api/v1/categories/**,/api/v1/modeles/**
+            - Path=/api/v1/articles/**,/api/v1/categories/**,/api/v1/modeles/**,,/api/v1/stock-movements/**
 
         - id: customer-service
           uri: http://localhost:8083

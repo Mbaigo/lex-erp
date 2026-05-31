@@ -16,14 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -38,45 +32,43 @@ public class StockMovementServiceImpl implements StockMovementService {
     @Override
     public StockMovementResponseDTO createMovement(StockMovementRequestDTO request) {
 
-        // 1. Vérifier l'article
-        Article article = articleRepository.findById(request.articleId())
-                .orElseThrow(() -> new RuntimeException("Article introuvable"));
+            // 1. Récupération de l'article
+            Article article = articleRepository.findById(request.articleId())
+                    .orElseThrow(() -> new RuntimeException("Article introuvable avec l'ID: " + request.articleId()));
 
-        // 2. Validation de base (si non gérée par @Valid dans le Controller)
-        if (request.quantite() == null || request.quantite() <= 0) {
-            throw new RuntimeException("Quantité invalide");
-        }
+            if (request.quantite() == null || request.quantite() <= 0) {
+                throw new RuntimeException("Quantité invalide : " + request.quantite());
+            }
 
-        int stockAvant = article.getStockActuel() != null ? article.getStockActuel() : 0;
+            int stockAvant = article.getStockActuel() != null ? article.getStockActuel() : 0;
 
-        // 3. Vérification stock suffisant pour SORTIE
-        if (request.type() == TypeMovementEnum.SORTIE && stockAvant < request.quantite()) {
-            throw new RuntimeException("Stock insuffisant pour cette sortie. Stock actuel : " + stockAvant);
-        }
+            if (request.type() == TypeMovementEnum.SORTIE && stockAvant < request.quantite()) {
+                throw new RuntimeException("Stock insuffisant pour cette sortie. Stock actuel : " + stockAvant);
+            }
 
-        // 4. Création du mouvement via le Mapper (qui calcule automatiquement le priceTotal)
-        StockMovement movement = mapper.toEntity(request);
-        movement.setArticle(article);
-        movement.setCreatedAt(LocalDateTime.now());
+            article.setStockInitial(stockAvant);
+            int stockApres = request.type() == TypeMovementEnum.ENTREE
+                    ? stockAvant + request.quantite()
+                    : stockAvant - request.quantite();
 
-        if (movement.getDateOperation() == null) {
-            movement.setDateOperation(LocalDate.now());
-        }
+            article.setStockActuel(stockApres);
 
-        // 5. Audit : Enregistrement de l'état du stock au moment du mouvement
-        movement.setStockAvantOperation(stockAvant);
-        int stockApres = request.type() == TypeMovementEnum.ENTREE
-                ? stockAvant + request.quantite()
-                : stockAvant - request.quantite();
-        movement.setStockApresOperation(stockApres);
+            StockMovement movement = mapper.toEntity(request);
+            movement.setArticle(article);
+            movement.setStockAvantOperation(stockAvant);
+            movement.setStockApresOperation(stockApres);
+            movement.setCreatedAt(LocalDateTime.now());
 
-        // 6. Sauvegarde
-        // ⚠️ CHANGEMENT MAJEUR : On ne fait plus article.setStockActuel()
-        // et on ne fait plus articleRepository.save(article).
-        // La base de données mettra le stockActuel à jour toute seule via la @Formula !
-        movement = movementRepository.save(movement);
+            if (movement.getDateOperation() == null) {
+                movement.setDateOperation(LocalDate.now());
+            }
 
-        return mapper.toResponse(movement);
+            articleRepository.save(article);
+            movement = movementRepository.save(movement);
+
+            return mapper.toResponse(movement);
+
+
     }
 
     // 🟢 HISTORIQUE GLOBAL

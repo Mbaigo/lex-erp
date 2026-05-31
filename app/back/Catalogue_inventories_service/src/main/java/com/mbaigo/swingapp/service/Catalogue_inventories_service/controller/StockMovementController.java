@@ -26,7 +26,7 @@ public class StockMovementController {
     }
 
     // 🔥 Recherche globale (par reference ou designation)
-    @GetMapping
+    @GetMapping("/All")
     public ResponseEntity<Page<StockMovementResponseDTO>> getHistory(
             @RequestParam(required = false) String reference,
             @RequestParam(required = false) String designation,
@@ -34,6 +34,16 @@ public class StockMovementController {
     ) {
         return ResponseEntity.ok(
                 stockMovementService.getHistory(reference, designation, pageable)
+        );
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<StockMovementResponseDTO>> getHistoryByArticle(
+            @RequestParam(required = false) Long articleId,
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(
+                stockMovementService.getHistoryByArticleId(articleId, pageable)
         );
     }
 }

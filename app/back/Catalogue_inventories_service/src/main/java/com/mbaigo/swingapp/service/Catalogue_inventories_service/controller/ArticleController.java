@@ -3,8 +3,6 @@ package com.mbaigo.swingapp.service.Catalogue_inventories_service.controller;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ArticleResponse;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.StockMovementResponseDTO;
-import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.reStock.RestockItemRequest;
-import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.reStock.StockMovementRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.service.ArticleService;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.service.StockMovementService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,7 +10,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -50,8 +50,9 @@ public class ArticleController {
     @PreAuthorize("hasAnyRole('MANAGER', 'TAILOR')")
     @Operation(summary = "Lister tous les articles", description = "Récupère l'inventaire complet de l'atelier.")
     public ResponseEntity<Page<ArticleResponse>> getAllArticles(
-            Pageable pageable){
-        return ResponseEntity.ok(articleService.getAllArticles(pageable));
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size){
+        return ResponseEntity.ok(articleService.getAllArticles(page,size));
     }
 
     @GetMapping("/{id}")
@@ -73,8 +74,10 @@ public class ArticleController {
     @GetMapping("/byCategory")
     public ResponseEntity<Page<ArticleResponse>> getArticlesByCategorie(
             @RequestParam(required = false) Long categorieId,
-            Pageable pageable
+            int page,int size
     ) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
         if (categorieId != null) {
             return ResponseEntity.ok(
                     articleService.getArticlesByCategorie(categorieId, pageable)
@@ -82,7 +85,7 @@ public class ArticleController {
         }
 
         // fallback : tous les articles
-        return ResponseEntity.ok(articleService.getAllArticles(pageable));
+        return ResponseEntity.ok(articleService.getAllArticles(page,size));
     }
 
     @GetMapping("/api/v1/articles/{id}/stock-history")

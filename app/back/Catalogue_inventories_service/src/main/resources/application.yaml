@@ -37,6 +37,11 @@ spring:
       # pourquoi il rejette le jeton.
       org.springframework.security: TRACE
       org.springframework.security.oauth2: TRACE
+      root: INFO
+      org.springframework.web: DEBUG # Affiche tout ce qui entre et sort
+      org.hibernate.SQL: DEBUG        # Affiche les requêtes SQL
+      org.hibernate.orm.jdbc.bind: TRACE # Affiche les valeurs envoyées aux paramètres SQL
+      com.mbaigo.swingapp.service.Catalogue_inventories_service: DEBUG          # Remplace par ton package (ex: com.lexcouture)
 # Configuration Swagger (Pour pouvoir envoyer le token via l'interface)
 springdoc:
   api-docs:

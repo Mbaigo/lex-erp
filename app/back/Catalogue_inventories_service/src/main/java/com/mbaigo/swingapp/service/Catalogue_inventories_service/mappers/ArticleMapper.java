@@ -16,9 +16,9 @@ public interface ArticleMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "version", ignore = true)
     // On mappe le stock reçu UNIQUEMENT dans le stockInitial
-    //@Mapping(target = "stockInitial", source = "stockActuel")
-    // Le stockActuel est ignoré car calculé par Hibernate (@Formula)
-    @Mapping(target = "stockActuel", ignore = true)
+    //@Mapping(target = "stockActuel", ignore = true)
+    @Mapping(target = "stockActuel", source = "stockInitial")
+    @Mapping(target = "stockInitial", source = "stockInitial")
     Article toEntity(ArticleRequest request);
 
     // Pour renvoyer les données au frontend, on lit le stockActuel
