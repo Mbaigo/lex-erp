@@ -22,7 +22,6 @@ public class FicheMesureController {
 
     // --- US : Créer une fiche ---
     @PostMapping
-    //@PreAuthorize("hasAnyRole('MANAGER', 'TAILOR')")
     @PreAuthorize("hasAnyRole('MANAGER','TAILOR')")
     public ResponseEntity<FicheMesureResponseDTO> createFicheMesure(@Valid @RequestBody FicheMesureRequestDTO requestDTO) {
         FicheMesureResponseDTO createdFiche = ficheMesureService.createFicheMesure(requestDTO);

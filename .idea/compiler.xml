@@ -38,7 +38,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="Catalogue_inventories_service" options="-parameters" />
       <module name="api-gateway" options="-parameters" />
-      <module name="customer-service" options="-parameters" />
+      <module name="customer-service" options="" />
       <module name="order_service" options="-parameters" />
     </option>
   </component>
