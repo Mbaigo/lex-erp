@@ -12,15 +12,27 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring", uses = {CategorieMapper.class})
 public interface ArticleMapper {
 
-    @Mapping(target = "categorie.id", source = "categorieId") // Le lien magique
-    @Mapping(target = "id", ignore = true) // L'ID est géré par la BDD
-    @Mapping(target = "version", ignore = true) // La version est gérée par JPA pour l'US 3.3
+    @Mapping(target = "categorie.id", source = "categorieId")
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "version", ignore = true)
+    // On mappe le stock reçu UNIQUEMENT dans le stockInitial
+    //@Mapping(target = "stockActuel", ignore = true)
+    @Mapping(target = "stockActuel", source = "stockInitial")
+    @Mapping(target = "stockInitial", source = "stockInitial")
     Article toEntity(ArticleRequest request);
 
+    // Pour renvoyer les données au frontend, on lit le stockActuel
+//    @Mapping(target = "quantiteStock", source = "stockActuel")
+//    @Mapping(target = "categorieId", source = "categorie.id")
+//    @Mapping(target = "categorieNom", source = "categorie.nom")
     ArticleResponse toResponse(Article entity);
 
     @Mapping(target = "categorie.id", source = "categorieId")
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "version", ignore = true)
+    // Lors d'une mise à jour (US d'édition), on met à jour uniquement le seuil, prix, etc.
+    // MAIS ON IGNORE LE STOCK pour ne pas écraser les mouvements de stock !
+    @Mapping(target = "stockActuel", ignore = true)
+    @Mapping(target = "stockInitial", ignore = true)
     void updateEntityFromRequest(ArticleRequest request, @MappingTarget Article entity);
 }

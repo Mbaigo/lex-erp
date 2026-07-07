@@ -9,6 +9,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,8 +48,12 @@ public class CommandeController {
     @PreAuthorize("hasAnyRole('MANAGER', 'TAILOR')")
     @Operation(summary = "Lister toutes les commandes",
             description = "Retourne l'ensemble des commandes de l'atelier.")
-    public ResponseEntity<List<CommandeResponse>> getAllCommandes() {
-        return ResponseEntity.ok(commandeService.getAllCommandes());
+    public ResponseEntity<Page<CommandeResponse>> getAllCommandes(@RequestParam(defaultValue = "CREEE", required = false) StatutCommande statut,
+                                                                  // Si le front ne précise pas la page, on renvoie les 10 premiers (page 0)
+                                                                  @PageableDefault(size = 10, page = 0) Pageable pageable) {
+
+        Page<CommandeResponse> commandes = commandeService.getCommandesParStatut(statut, pageable);
+        return ResponseEntity.ok(commandes);
     }
 
     @PatchMapping("/{id}/statut")
@@ -64,10 +71,16 @@ public class CommandeController {
         return ResponseEntity.ok(commandeService.annulerCommande(id));
     }
 
-    // Endpoint : GET /api/v1/commandes/rendez-vous?filtre=semaine
+    /**
+     * Récupère la liste paginée des rendez-vous (dates de livraison/essayage) filtrée par période.
+     * * URL Front-end cible : GET /api/v1/commandes/rendez-vous?filtre=semaine&page=0&size=10
+     */
     @GetMapping("/rendez-vous")
-    public ResponseEntity<List<CommandeResponse>> getPlanning(@RequestParam(defaultValue = "journalier") String filtre) {
-        List<CommandeResponse> planning = commandeService.getRendezVousParPeriode(filtre);
+    public ResponseEntity<Page<CommandeResponse>> getRendezVous(
+            @RequestParam(defaultValue = "journalier", required = false) String filtre,
+            @PageableDefault(size = 10, page = 0) Pageable pageable) {
+
+        Page<CommandeResponse> planning = commandeService.getRendezVousParPeriode(filtre, pageable);
         return ResponseEntity.ok(planning);
     }
 }

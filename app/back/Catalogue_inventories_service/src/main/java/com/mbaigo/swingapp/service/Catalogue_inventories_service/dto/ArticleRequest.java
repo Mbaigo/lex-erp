@@ -1,5 +1,8 @@
 package com.mbaigo.swingapp.service.Catalogue_inventories_service.dto;
 
+import com.mbaigo.swingapp.service.Catalogue_inventories_service.enums.UniteMesureEnum;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,15 +22,19 @@ public record ArticleRequest(
 
         @NotNull(message = "La quantité en stock est obligatoire")
         @Min(value = 0, message = "Le stock initial ne peut pas être négatif")
-        Double quantiteEnStock,
+        Long stockInitial,
 
         @NotNull(message = "Le prix d'achat est obligatoire")
         @Min(value = 0, message = "Le prix d'achat ne peut pas être négatif")
-        BigDecimal prixAchat,
+        BigDecimal prixUnitaire,
 
         @NotNull(message = "Le seuil d'alerte est obligatoire")
         @Min(value = 0, message = "Le seuil d'alerte ne peut pas être négatif")
         Double seuilAlerte,
+
+        @NotNull(message = "L'unite de mesure est obligatoire: soit METRE, ROULEAU, BOITE, UNITE, ETC.")
+        @Enumerated(EnumType.STRING)
+        UniteMesureEnum uniteMesure,
 
         @NotNull(message = "L'ID de la catégorie est obligatoire")
         Long categorieId // Le client envoie juste l'ID de la catégorie (ex: 1 pour "Mercerie")

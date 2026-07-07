@@ -9,9 +9,14 @@ import com.mbaigo.swingapp.service.Catalogue_inventories_service.service.impl.Ca
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 import java.util.Optional;
@@ -79,25 +84,38 @@ class CategorieServiceImplTest {
     // ==========================================
 
     @Test
-    @DisplayName("Doit retourner la liste complète des catégories")
-    void getAllCategories_shouldReturnList() {
-        // Arrange
-        Categorie cat1 = Categorie.builder().id(1L).code("TIS").build();
-        Categorie cat2 = Categorie.builder().id(2L).code("FIL").build();
+    @DisplayName("Devrait retourner une page de catégories triées par nom")
+    void shouldReturnPaginatedCategories() {
+        // 1. GIVEN (Données simulées)
+        int page = 0;
+        int size = 5;
+        Categorie categorie = new Categorie();
+        categorie.setNom("Mercerie");
 
-        CategorieResponse res1 = new CategorieResponse(1L, "TIS", "Tissus", null);
-        CategorieResponse res2 = new CategorieResponse(2L, "FIL", "Fils", null);
+        CategorieResponse response = new CategorieResponse(1L, "MERC", "Mercerie", "Accessoires");
 
-        when(categorieRepository.findAll()).thenReturn(List.of(cat1, cat2));
-        when(categorieMapper.toResponse(cat1)).thenReturn(res1);
-        when(categorieMapper.toResponse(cat2)).thenReturn(res2);
+        Page<Categorie> categoriePage = new PageImpl<>(List.of(categorie));
 
-        // Act
-        List<CategorieResponse> result = categorieService.getAllCategories();
+        // Mocking des appels
+        when(categorieRepository.findAll(any(Pageable.class))).thenReturn(categoriePage);
+        when(categorieMapper.toResponse(any(Categorie.class))).thenReturn(response);
 
-        // Assert
-        assertThat(result).hasSize(2);
-        assertThat(result).extracting(CategorieResponse::code).containsExactly("TIS", "FIL");
+        // 2. WHEN (Appel de la méthode)
+        Page<CategorieResponse> result = categorieService.getAllCategories(page, size);
+
+        // 3. THEN (Vérifications)
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).nom()).isEqualTo("Mercerie");
+
+        // Vérification du PageRequest (Trier par nom ascendant)
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(categorieRepository).findAll(pageableCaptor.capture());
+
+        Pageable capturedPageable = pageableCaptor.getValue();
+        assertThat(capturedPageable.getPageNumber()).isEqualTo(page);
+        assertThat(capturedPageable.getPageSize()).isEqualTo(size);
+        assertThat(capturedPageable.getSort().getOrderFor("nom").getDirection()).isEqualTo(Sort.Direction.ASC);
     }
 
     @Test

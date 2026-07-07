@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/clients")
@@ -19,6 +20,18 @@ import java.net.URI;
 public class ClientController {
 
     private final ClientService clientService;
+
+    // US : Récupérer un client par son ID
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'TAILOR')")
+    public ResponseEntity<ClientResponseDTO> getClientById(@PathVariable Long id) {
+        Optional<ClientResponseDTO> clientOpt = clientService.getClientById(id);
+
+        return clientOpt
+                .map(ResponseEntity::ok) // Si trouvé -> HTTP 200 avec le DTO en JSON
+                .orElse(ResponseEntity.notFound().build()); // Si absent -> HTTP 404 Not Found
+    }
+
 
     // Récupérer tous les clients
     @GetMapping
@@ -32,7 +45,7 @@ public class ClientController {
     // US 1.2 : Recherche rapide par téléphone (ex: /api/v1/clients/search?telephone=+2376000000)
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('MANAGER', 'TAILOR')")
-    public ResponseEntity<ClientResponseDTO> searchByTelephone(@RequestParam String telephone) {
+    public ResponseEntity<Optional<ClientResponseDTO>> searchByTelephone(@RequestParam String telephone) {
         return ResponseEntity.ok(clientService.getClientByTelephone(telephone));
     }
 

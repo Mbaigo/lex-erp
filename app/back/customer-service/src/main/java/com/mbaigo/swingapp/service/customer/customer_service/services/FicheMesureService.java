@@ -2,6 +2,7 @@ package com.mbaigo.swingapp.service.customer.customer_service.services;
 
 import com.mbaigo.swingapp.service.customer.customer_service.dto.FicheMesureRequestDTO;
 import com.mbaigo.swingapp.service.customer.customer_service.dto.FicheMesureResponseDTO;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -11,4 +12,5 @@ public interface FicheMesureService {
     FicheMesureResponseDTO getFicheById(Long id);
     // ... (autres méthodes)
     FicheMesureResponseDTO updateFicheMesure(Long id, FicheMesureRequestDTO requestDTO);
+    Page<FicheMesureResponseDTO> getAllFiches(int page, int size);
 }

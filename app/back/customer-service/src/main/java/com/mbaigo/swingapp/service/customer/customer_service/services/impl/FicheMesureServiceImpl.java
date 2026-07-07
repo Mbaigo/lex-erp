@@ -10,6 +10,10 @@ import com.mbaigo.swingapp.service.customer.customer_service.repositories.FicheM
 import com.mbaigo.swingapp.service.customer.customer_service.services.FicheMesureService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,6 +71,13 @@ public class FicheMesureServiceImpl implements FicheMesureService {
 
         // 4. Sauvegarder et retourner
         return ficheMesureMapper.toDto(ficheMesureRepository.save(ficheExistante));
+    }
+
+    @Override
+    public Page<FicheMesureResponseDTO> getAllFiches(int page, int size) {
+        // On crée la requête de pagination (Page 0 par défaut, triée par nom de A à Z)
+        Pageable pageable = PageRequest.of(page, size, Sort.by("datePrise").ascending());
+        return ficheMesureRepository.findAll(pageable).map(ficheMesureMapper::toDto);
     }
 
     @Override

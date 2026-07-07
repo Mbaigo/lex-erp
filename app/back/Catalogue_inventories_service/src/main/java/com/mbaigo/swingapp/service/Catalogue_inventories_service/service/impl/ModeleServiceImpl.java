@@ -1,5 +1,6 @@
 package com.mbaigo.swingapp.service.Catalogue_inventories_service.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ModeleRequest;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.dto.ModeleResponse;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.entities.Article;
@@ -9,10 +10,17 @@ import com.mbaigo.swingapp.service.Catalogue_inventories_service.repositories.Ar
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.repositories.ModeleRepository;
 import com.mbaigo.swingapp.service.Catalogue_inventories_service.service.ModeleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -92,5 +100,28 @@ public class ModeleServiceImpl implements ModeleService {
         // Grâce au orphanRemoval = true dans ton entité Modele,
         // la suppression du modèle supprimera proprement ses lignes de nomenclature en cascade.
         modeleRepository.deleteById(id);
+    }
+    private final ObjectMapper objectMapper;
+    // On injecte notre nouveau service de fichiers
+    private final FileStorageService fileStorageService;
+
+    @Transactional
+    public ModeleResponse creerAvecImage(String json, MultipartFile file) throws IOException {
+
+        // 1. Délégation de la sauvegarde physique
+        String nomFichier = fileStorageService.sauvegarderFichier(file);
+
+        // 2. Traitement métier
+        ModeleRequest request = objectMapper.readValue(json, ModeleRequest.class);
+        Modele modele = modeleMapper.toEntity(request);
+        modele.setImageUrl(nomFichier);
+
+        // 3. Persistance
+        return modeleMapper.toResponse(modeleRepository.save(modele));
+    }
+
+    public Resource chargerImage(String nomFichier) {
+        // Délégation simple
+        return fileStorageService.chargerFichierCommeRessource(nomFichier);
     }
 }

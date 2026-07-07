@@ -21,28 +21,22 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // On désactive la protection CSRF car nous faisons une API REST stateless
-                .csrf(csrf -> csrf.disable())
-
+                .csrf(csrf -> csrf.disable()) // Désactivé pour une API REST stateless
                 .authorizeHttpRequests(auth -> auth
-                        // 1. On laisse la porte grande ouverte pour Swagger
+                        // 1. Autoriser Swagger et la doc OpenAPI sans authentification
                         .requestMatchers(
+                                "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/v3/api-docs/**",
-                                "/swagger-resources/**",
                                 "/webjars/**"
                         ).permitAll()
-
-                        // 2. (Optionnel pour le dev) Si tu veux tester tes API sans t'embêter avec Keycloak tout de suite,
-                        // tu peux décommenter la ligne suivante et commenter la 3ème :
-                        // .requestMatchers("/api/**").permitAll()
-
-                        // 3. Tout le reste (tes API) nécessite d'être connecté via Keycloak
+                        // 2. Tout le reste nécessite d'être authentifié
                         .anyRequest().authenticated()
                 )
-                // On dit à Spring qu'il doit lire les tokens JWT envoyés par Keycloak
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}));
+                // 3. Configurer le Resource Server pour valider les JWT Keycloak
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                );
 
         return http.build();
     }
@@ -53,6 +47,7 @@ public class SecurityConfig {
      * Mais Keycloak range les rôles dans 'realm_access.roles'.
      * Ce convertisseur fait le pont entre les deux.
      */
+
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
@@ -77,4 +72,5 @@ public class SecurityConfig {
 
         return converter;
     }
+
 }

@@ -39,6 +39,8 @@ public class Modele {
     @OneToMany(mappedBy = "modele", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<LigneNomenclature> lignesNomenclature = new ArrayList<>();
+    @Column(length = 500)
+    private String imageUrl;
 
     // Méthode utilitaire pour calculer le coût total (Main d'œuvre + Matériaux)
     public BigDecimal getCoutDeBase() {

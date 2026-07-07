@@ -25,4 +25,5 @@ public record ModeleRequest(
         @NotEmpty(message = "Un modèle doit contenir au moins un article dans sa nomenclature")
         @Valid
         List<LigneNomenclatureRequest> lignes
+
 ) {}
